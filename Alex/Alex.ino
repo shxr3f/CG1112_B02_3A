@@ -13,6 +13,8 @@ typedef enum
   RIGHT = 4
 } TDirection;
 
+volatile TDirection dir = STOP;
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -33,12 +35,12 @@ typedef enum
 // right encoders.
 volatile unsigned long leftForwardTicks; 
 volatile unsigned long rightForwardTicks;
-volatile unsigned long rightReverseicks;
+volatile unsigned long rightReverseTicks;
 volatile unsigned long leftReverseTicks;
 
 volatile unsigned long leftForwardTicksTurns; 
 volatile unsigned long rightForwardTicksTurns;
-volatile unsigned long rightReverseicksTurns;
+volatile unsigned long rightReverseTicksTurns;
 volatile unsigned long leftReverseTicksTurns;
 
 // Store the revolutions on Alex's left
@@ -189,16 +191,37 @@ void enablePullups()
 // Functions to be called by INT0 and INT1 ISRs.
 void leftISR()
 {
-  leftTicks++;
-  Serial.print("LEFT: ");
-  Serial.println(leftTicks);
+  if(dir == FORWARD) {
+    leftForwardTicks++;
+    }
+  if (dir == BACKWARD) {
+    leftReverseTicks++; 
+    }
+  if (dir == LEFT) {
+    leftReverseTicksTurns++; 
+    }
+  if (dir == RIGHT) {
+    leftForwardTicksTurns++; 
+    }
 }
 
 void rightISR()
 {
-  rightTicks++;
-  Serial.print("RIGHT: ");
-  Serial.println(rightTicks);
+  
+  if(dir == FORWARD) {
+    rightForwardTicks++;
+    forwardDist = (unsigned long) ((float) rightForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    }
+  if (dir == BACKWARD) {
+    rightReverseTicks++; 
+    reverseDist = (unsigned long) ((float) rightReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    }
+  if (dir == LEFT) {
+    rightForwardTicksTurns++; 
+    }
+  if (dir == RIGHT) {
+    rightReverseTicksTurns++; 
+    }
 }
 
 // Set up the external interrupt pins INT0 and INT1
@@ -321,6 +344,8 @@ int pwmVal(float speed)
 // continue moving forward indefinitely.
 void forward(float dist, float speed)
 {
+  dir = FORWARD;
+  
   int val = pwmVal(speed);
 
   // For now we will ignore dist and move
@@ -344,6 +369,7 @@ void forward(float dist, float speed)
 // continue reversing indefinitely.
 void reverse(float dist, float speed)
 {
+  dir = BACKWARD;
 
   int val = pwmVal(speed);
 
@@ -367,6 +393,8 @@ void reverse(float dist, float speed)
 // turn left indefinitely.
 void left(float ang, float speed)
 {
+  dir = LEFT;
+  
   int val = pwmVal(speed);
 
   // For now we will ignore ang. We will fix this in Week 9.
@@ -386,6 +414,8 @@ void left(float ang, float speed)
 // turn right indefinitely.
 void right(float ang, float speed)
 {
+  dir = RIGHT;
+  
   int val = pwmVal(speed);
 
   // For now we will ignore ang. We will fix this in Week 9.
@@ -401,6 +431,8 @@ void right(float ang, float speed)
 // Stop Alex. To replace with bare-metal code later.
 void stop()
 {
+  dir = STOP;
+  
   analogWrite(LF, 0);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
@@ -415,8 +447,14 @@ void stop()
 // Clears all our counters
 void clearCounters()
 {
-  leftTicks=0;
-  rightTicks=0;
+  leftForwardTicks=0;
+  rightForwardTicks=0;
+  leftReverseTicks=0;
+  rightReverseTicks=0;
+  leftForwardTicksTurns=0;
+  rightForwardTicksTurns=0;
+  leftReverseTicksTurns=0;
+  rightReverseTicksTurns=0;
   leftRevs=0;
   rightRevs=0;
   forwardDist=0;
@@ -426,7 +464,8 @@ void clearCounters()
 // Clears one particular counter
 void clearOneCounter(int which)
 {
-  switch(which)
+  clearCounters();
+  /* switch(which)
   {
     case 0:
       clearCounters();
@@ -454,8 +493,8 @@ void clearOneCounter(int which)
 
     case 6:
       reverseDist=0;
-      break;
-  }
+      break; 
+  } */
 }
 // Intialize Vincet's internal states
 
