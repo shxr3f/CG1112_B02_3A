@@ -209,7 +209,7 @@ void rightISR()
 {
   
   if(dir == FORWARD) {
-    rightForwardTicks++;
+    rightForwardTicks+
     forwardDist = (unsigned long) ((float) rightForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
     }
   if (dir == BACKWARD) {
@@ -511,6 +511,11 @@ void handleCommand(TPacket *command)
     case COMMAND_FORWARD:
         sendOK();
         forward((float) command->params[0], (float) command->params[1]);
+      break;
+
+    case COMMAND_LEFT:
+        sendOK();
+        left((float) command->params[0], (float) command->params[1]);
       break;
 
     /*
