@@ -509,7 +509,12 @@ void handleCommand(TPacket *command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
     case COMMAND_FORWARD:
+      sendOK();
+      forward((float) command->params[0], (float) command->params[1]);
+    break;
+    case COMMAND_TURN_LEFT:
         sendOK();
+<<<<<<< HEAD
         forward((float) command->params[0], (float) command->params[1]);
       break;
 
@@ -518,6 +523,22 @@ void handleCommand(TPacket *command)
         left((float) command->params[0], (float) command->params[1]);
       break;
 
+=======
+        left((float) command->params[0], (float) command->params[1]);
+    break;
+    case COMMAND_TURN_RIGHT:
+      sendOK();
+      right((float) command->params[0], (float) command->params[1]);
+    break;
+    case COMMAND_REVERSE:
+      sendOK();
+      reverse((float) command->params[0], (float) command->params[1]);
+    break;
+    case COMMAND_STOP:
+      sendOK();
+      stop();
+    break;
+>>>>>>> fc82697e2b37195b812e8a100aca3af396118a6a
     /*
      * Implement code for other commands here.
      * 
