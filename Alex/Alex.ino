@@ -17,7 +17,6 @@ volatile TDirection dir = STOP;
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-
 #define COUNTS_PER_REV 198
 
 #define WHEEL_CIRC 20.41
@@ -79,6 +78,21 @@ TResult readPacket(TPacket *packet)
 
 void sendStatus()
 {
+  TPacket statusPacket;
+  statusPacket.packetType = PACKET_TYPE_RESPONSE;
+  statusPacket.command = RESP_STATUS;
+  statusPacket.params[0] = leftForwardTicks;
+  statusPacket.params[1] = rightForwardTicks;
+  statusPacket.params[2] = leftReverseTicks;
+  statusPacket.params[3] = rightReverseTicks;
+  statusPacket.params[4] = leftForwardTicksTurns;
+  statusPacket.params[5] = rightForwardTicksTurns;
+  statusPacket.params[6] = leftReverseTicksTurns;
+  statusPacket.params[7] = rightReverseTicksTurns;
+  statusPacket.params[8] = forwardDist;
+  statusPacket.params[9] = reverseDist; 
+  sendResponse(&statusPacket);
+  
   // Implement code to send back a packet containing key
   // information like leftTicks, rightTicks, leftRevs, rightRevs
   // forwardDist and reverseDist
@@ -209,7 +223,7 @@ void rightISR()
 {
   
   if(dir == FORWARD) {
-    rightForwardTicks+
+    rightForwardTicks++;
     forwardDist = (unsigned long) ((float) rightForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
     }
   if (dir == BACKWARD) {
@@ -464,37 +478,48 @@ void clearCounters()
 // Clears one particular counter
 void clearOneCounter(int which)
 {
-  clearCounters();
-  /* switch(which)
+  switch(which)
   {
     case 0:
-      clearCounters();
+      leftForwardTicks = 0;
       break;
 
     case 1:
-      leftTicks=0;
+      rightForwardTicks = 0;
       break;
 
     case 2:
-      rightTicks=0;
+      leftReverseTicks = 0;
       break;
 
     case 3:
-      leftRevs=0;
+      rightReverseTicks = 0;
       break;
 
     case 4:
-      rightRevs=0;
+      leftForwardTicksTurns = 0;
       break;
 
     case 5:
-      forwardDist=0;
+      rightForwardTicksTurns = 0;
       break;
 
     case 6:
-      reverseDist=0;
+      leftReverseTicksTurns = 0;
       break; 
-  } */
+
+    case 7;
+      rightReverseTicksTurns = 0;
+      break;
+
+    case 8;
+      forwardDist = 0;
+      break;
+
+    case 9;
+      reverseDist = 0;
+      break;
+  } 
 }
 // Intialize Vincet's internal states
 
@@ -517,11 +542,6 @@ void handleCommand(TPacket *command)
       sendOK();
       forward((float) command->params[0], (float) command->params[1]);
       break;
-    
-    case COMMAND_LEFT:
-      sendOK();
-      left((float) command->params[0], (float) command->params[1]);
-      break;
 
     case COMMAND_TURN_RIGHT:
       sendOK();
@@ -536,7 +556,16 @@ void handleCommand(TPacket *command)
     case COMMAND_STOP:
       sendOK();
       stop();
-      break;  
+      break;
+
+    case COMMAND_GET_STATS:
+      sendOK();
+      sendStatus();
+      break;
+
+    case COMMAND_CLEAR_STATS:
+      sendOK();
+      clearOneCounter(command -> params[0]);
         
     default:
       sendBadCommand();
@@ -608,7 +637,7 @@ void handlePacket(TPacket *packet)
     case PACKET_TYPE_ERROR:
       break;
 
-    case PACKET_TYPE_MESSAGE:
+    case PACKET_TYPE_MESSAGE:end
       break;
 
     case PACKET_TYPE_HELLO:
@@ -620,11 +649,11 @@ void loop() {
 
 // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
- forward(0, 100);
+ //forward(0, 100);
 
 // Uncomment the code below for Week 9 Studio 2
 
-/*
+
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
 
@@ -643,5 +672,5 @@ void loop() {
         sendBadChecksum();
       } 
       
-      */
+     
 }
