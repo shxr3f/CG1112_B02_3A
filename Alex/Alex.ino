@@ -51,6 +51,10 @@ volatile unsigned long rightRevs;
 // Forward and backward distance traveled
 volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
+unsigned long forwardDist;
+unsigned long reverseDist;
+unsigned long deltaDist;
+unsigned long newDist;
 
 
 /*
@@ -359,9 +363,16 @@ int pwmVal(float speed)
 // continue moving forward indefinitely.
 void forward(float dist, float speed)
 {
-  dir = FORWARD;
+  if (dist >0 )
+    deltaDist = dist;
+  else
+    deltaDist = 9999999;
+    
+  newDist = forwardDist + deltaDist;
+  //dir = FORWARD;
   
-  int val = pwmVal(speed);
+  //int val = pwmVal(speed);
+  
 
   // For now we will ignore dist and move
   // forward indefinitely. We will fix this
