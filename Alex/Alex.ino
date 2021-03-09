@@ -1,14 +1,25 @@
 #include <serialize.h>
+#include <stdarg.h>
 
 #include "packet.h"
 #include "constants.h"
+
+typedef enum
+{
+  STOP = 0,
+  FORWARD = 1,
+  BACKWARD = 2,
+  LEFT = 3,
+  RIGHT = 4
+} TDirection;
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
 #define COUNTS_PER_REV 198
 
 #define WHEEL_CIRC 20.41
-
+#define pi 3.141592654
 #define LF 6
 #define LR 5
 #define RF 10
@@ -20,8 +31,15 @@
 
 // Store the ticks from Alex's left and
 // right encoders.
-volatile unsigned long leftTicks; 
-volatile unsigned long rightTicks;
+volatile unsigned long leftForwardTicks; 
+volatile unsigned long rightForwardTicks;
+volatile unsigned long rightReverseicks;
+volatile unsigned long leftReverseTicks;
+
+volatile unsigned long leftForwardTicksTurns; 
+volatile unsigned long rightForwardTicksTurns;
+volatile unsigned long rightReverseicksTurns;
+volatile unsigned long leftReverseTicksTurns;
 
 // Store the revolutions on Alex's left
 // and right wheels
@@ -77,6 +95,16 @@ void sendMessage(const char *message)
   messagePacket.packetType=PACKET_TYPE_MESSAGE;
   strncpy(messagePacket.data, message, MAX_STR_LEN);
   sendResponse(&messagePacket);
+}
+
+void dbprint(char *format, ...)
+{
+  va_list args;
+  char buffer[128];
+
+  va_start(args, format);
+  vsprintf(buffer, format, args);
+  sendMessage(buffer);
 }
 
 void sendBadPacket()
