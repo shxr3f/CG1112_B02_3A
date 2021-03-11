@@ -7,10 +7,10 @@
 #include "serialize.h"
 
 /* TODO: Set PORT_NAME to the port name of your Arduino */
-#define PORT_NAME			"/dev/ttyACM1"
+#define PORT_NAME			"/dev/ttyACM0"
 /* END TODO */
 
-#define BAUD_RATE			B57600
+#define BAUD_RATE			B9600
 
 // TLS Port Number
 #define PORTNUM    			5000
@@ -197,7 +197,7 @@ void sendNetworkData(const char *data, int len)
             /* TODO: Implement SSL write here to write data to the network. Note that
               handleNetworkData should already have set tls_conn to point to the TLS
               connection we want to write to. */
-              sslWrite(tls_conn, data, len);
+              c = sslWrite(tls_conn, data, sizeof(data));
 
 
             /* END TODO */
@@ -289,7 +289,9 @@ void handleNetworkData(void *conn, const char *buffer, int len)
         tls_conn = conn; // This is used by sendNetworkData
 
 	if(buffer[0] == NET_COMMAND_PACKET)
+    {
 		handleCommand(conn, buffer);
+     }
 }
 
 void *worker(void *conn)
@@ -301,7 +303,7 @@ void *worker(void *conn)
 	while(networkActive)
 	{
 		/* TODO: Implement SSL read into buffer */
-        sslRead(conn, buffer, len);
+        len = sslRead(conn, buffer, sizeof(buffer));
 		/* END TODO */
 		// As long as we are getting data, network is active
 		networkActive=(len > 0);
