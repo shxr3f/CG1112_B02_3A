@@ -326,6 +326,71 @@ void writeSerial(const unsigned char *buffer, int len)
 }
 
 /*
+ * 
+ * Alex Colour Sensor
+ * 
+ */
+void setupADC()
+{
+  PRR &= ~(1 << PRADC); //Turn on Power for ADC
+  ADCSRA |= ((1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0));
+  ADMUX |= ((1 << REFS0) | (1 << ADLAR)); //Left adjusted to read 8 bits at A0
+  
+}
+
+int startADC()
+{
+  ADCSRA |= (1 << ADSC);
+  while(ADCSRA & (1 << ADSC));
+  int adcvalue = ADCH;
+  return adcvalue;
+}
+
+int colourValue()
+{
+  int readings[5];
+  int sum = 0;
+  int finalvalue;
+  setupADC();
+  for(int i = 0; i < 5; i++)
+  {
+    readings[i] = startADC();
+    sum += readings[i];
+  }
+  finalvalue = sum / 5;
+  PRR |= (1 << PRADC); //Turn off power for ADC
+  return finalvalue;
+}
+
+char findColour()
+{
+  int colour[2] = {0,0};
+  //Setup Red and Green LED at A1 and A2
+  DDRC |= ((1 << 2) | (1 << 1));
+  
+  //On Red
+  PORTC |= (1 << 1);
+  colour[0] = colourValue;
+
+  //Off Red and ON Green
+  PORTC &= ~(1 << 1);
+  PORTC |= (1 << 2);
+  colour[1] = colourValue;
+
+  //Off Green
+  PORTC &= ~(1 << 2);
+
+  if(colour[0] > colour[1])
+  {
+    return "R";
+  }
+  else
+  {
+    return "G";
+  }
+  
+}
+/*
  * Alex's motor drivers.
  * 
  */
