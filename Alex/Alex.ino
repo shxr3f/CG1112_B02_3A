@@ -466,7 +466,7 @@ void forward(float dist, float speed)
   // This will be replaced later with bare-metal code.
   
   analogWrite(LF, val);
-  analogWrite(RF, val);
+  analogWrite(RF, val-25);
   analogWrite(LR, 0);
   analogWrite(RR, 0);
 }
@@ -496,7 +496,7 @@ void reverse(float dist, float speed)
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
   analogWrite(LR, val);
-  analogWrite(RR, val);
+  analogWrite(RR, val -25);
   analogWrite(LF, 0);
   analogWrite(RF, 0);
 }
@@ -533,7 +533,7 @@ void left(float ang, float speed)
   // To turn left we reverse the left wheel and move
   // the right wheel forward.
   analogWrite(LR, val);
-  analogWrite(RF, val);
+  analogWrite(RF, val-25);
   analogWrite(LF, 0);
   analogWrite(RR, 0);
 }
@@ -562,7 +562,7 @@ void right(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn right we reverse the right wheel and move
   // the left wheel forward.
-  analogWrite(RR, val);
+  analogWrite(RR, val-25);
   analogWrite(LF, val);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
@@ -666,7 +666,7 @@ void handleCommand(TPacket *command)
 
     case COMMAND_TURN_LEFT:
       sendOK();
-      forward((float) command->params[0], (float) command->params[1]);
+      left((float) command->params[0], (float) command->params[1]);
       break;
 
     case COMMAND_TURN_RIGHT:
@@ -776,7 +776,7 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-/*
+
 // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
  //forward(0, 100);
@@ -862,8 +862,6 @@ void loop() {
           stop();
         }
     }
-    */
-    findColour();
     
      
 }
