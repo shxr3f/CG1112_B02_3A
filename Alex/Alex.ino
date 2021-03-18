@@ -354,6 +354,7 @@ int colourValue()
   setupADC();
   for(int i = 0; i < 5; i++)
   {
+    delay(100);
     readings[i] = startADC();
     sum += readings[i];
   }
@@ -364,28 +365,39 @@ int colourValue()
 
 char findColour()
 {
-  int colour[2] = {0,0};
+  int colour[3] = {0,0,0};
   //Setup Red and Green LED at A1 and A2
   DDRC |= ((1 << 2) | (1 << 1));
+  colour[0] = colourValue();
   
   //On Red
   PORTC |= (1 << 1);
-  colour[0] = colourValue;
+  colour[1] = colourValue();
 
   //Off Red and ON Green
   PORTC &= ~(1 << 1);
   PORTC |= (1 << 2);
-  colour[1] = colourValue;
+  colour[2] = colourValue();
 
   //Off Green
   PORTC &= ~(1 << 2);
 
-  if(colour[0] > colour[1])
+  if(colour[2] > colour[1])
   {
+    Serial.print(colour[0]);
+    Serial.print(", ");
+    Serial.print(colour[1]);
+    Serial.print(", ");
+    Serial.println(colour[2]);
     return "R";
   }
   else
   {
+    Serial.print(colour[0]);
+    Serial.print(", ");
+    Serial.print(colour[1]);
+    Serial.print(", ");
+    Serial.println(colour[2]);
     return "G";
   }
   
@@ -764,7 +776,7 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-
+/*
 // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
  //forward(0, 100);
@@ -850,5 +862,8 @@ void loop() {
           stop();
         }
     }
+    */
+    findColour();
+    
      
 }
