@@ -27,7 +27,7 @@ volatile TDirection dir = STOP;
 #define RF 10
 #define RR 11
 
-#define ALEX_LENGTH 16
+#define ALEX_LENGTH 0
 #define ALEX_BREADTH 6
 
 float AlexDiagonal = 0.0;
