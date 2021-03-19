@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
@@ -10,22 +11,11 @@
 #include "parameters.h"
 
 
-
-
-/*
- *    Alex's State Variables
- */
-
-
-
 /*
  * 
  * Alex Communication Routines.
  * 
  */
-
-
-
 
 void WDT_off(void)
 {
@@ -63,8 +53,6 @@ void putArduinoToIdle()
   SMCR &= !(SMCR_SLEEP_ENABLE_MASK);
 }
 
-
- 
  
 TResult readPacket(TPacket *packet)
 {
@@ -83,6 +71,7 @@ TResult readPacket(TPacket *packet)
       return deserialize(buffer, len, packet);
     
 }
+
 
 void sendStatus()
 {
@@ -110,11 +99,12 @@ void sendStatus()
   //
 }
 
+
 void sendMessage(const char *message)
 {
   // Sends text messages back to the Pi. Useful
   // for debugging.
-  
+
   TPacket messagePacket;
   messagePacket.packetType=PACKET_TYPE_MESSAGE;
   strncpy(messagePacket.data, message, MAX_STR_LEN);
