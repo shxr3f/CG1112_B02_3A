@@ -440,7 +440,6 @@ void setup() {
   setupPowerSaving();
   sei();
   calibrateMotors();
-  putArduinoToIdle();
 }
 
 void handlePacket(TPacket *packet)
@@ -468,6 +467,8 @@ void handlePacket(TPacket *packet)
 void loop() {
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
+  
+  putArduinoToIdle();
 
   TResult result = readPacket(&recvPacket);
   
@@ -483,4 +484,6 @@ void loop() {
       {
         sendBadChecksum();
       }
+
+  
 }
