@@ -1,67 +1,21 @@
 #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
-
 #include "packet.h"
 #include "constants.h"
-
-typedef enum
-{
-  STOP = 0,
-  FORWARD = 1,
-  BACKWARD = 2,
-  LEFT = 3,
-  RIGHT = 4
-} TDirection;
-
-volatile TDirection dir = STOP;
-
+#include <avr/sleep.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#define COUNTS_PER_REV 198
+#include "movement.h"
+#include "parameters.h"
 
-#define WHEEL_CIRC 20.41
-#define PI 3.141592654
-#define LF 6
-#define LR 5
-#define RF 10
-#define RR 11
 
-#define ALEX_LENGTH 16
-#define ALEX_BREADTH 6
 
-float AlexDiagonal = 0.0;
-float AlexCirc = 0.0;
 
 /*
  *    Alex's State Variables
  */
 
-// Store the ticks from Alex's left and
-// right encoders.
-volatile unsigned long leftForwardTicks; 
-volatile unsigned long rightForwardTicks;
-volatile unsigned long rightReverseTicks;
-volatile unsigned long leftReverseTicks;
-
-volatile unsigned long leftForwardTicksTurns; 
-volatile unsigned long rightForwardTicksTurns;
-volatile unsigned long rightReverseTicksTurns;
-volatile unsigned long leftReverseTicksTurns;
-
-// Store the revolutions on Alex's left
-// and right wheels
-volatile unsigned long leftRevs;
-volatile unsigned long rightRevs;
-
-// Forward and backward distance traveled
-volatile unsigned long forwardDist;
-volatile unsigned long reverseDist;
-
-unsigned long deltaDist;
-unsigned long newDist;
-unsigned long deltaTicks;
-unsigned long targetTicks;
 
 
 /*
@@ -69,6 +23,48 @@ unsigned long targetTicks;
  * Alex Communication Routines.
  * 
  */
+
+
+
+
+void WDT_off(void)
+{
+
+  //Clear WDRF in MCUSR
+  MCUSR  &= ~(1<<WDRF);
+  //Write 1 to WDCE and WDE
+  WDTCSR |= (1<<WDCE) | (1<<WDE);
+  // Turn off WDT
+  WDTCSR  = 0x00;
+}
+
+void setupPowerSaving()
+{
+  //disable TWI, TIM1 and SPI interfaces
+  PRR    |= (PRR_TWI_MASK | PRR_SPI_MASK | PRR_TIMER2_MASK);
+  //disable ADC, TIM0 and TIM2
+  ADCSRA |= ADCSRA_ADC_MASK;
+  PRR    |= (PRR_ADC_MASK);
+  //set the Arduino to idle mode
+  SMCR   |= SMCR_IDLE_MODE_MASK;
+  //set up Port B Pin 5 and set it to logic LOW
+  DDRB   |= (1 << 5);
+  PORTB  &= !(1 << 5);
+  
+}
+
+void putArduinoToIdle()
+{
+  //shut down timer0 and timer2
+  PRR |= (PRR_TIMER0_MASK | PRR_TIMER1_MASK);
+  //set Arduino to idle mode
+  SMCR |= SMCR_SLEEP_ENABLE_MASK;
+  sleep_cpu();
+  SMCR &= !(SMCR_SLEEP_ENABLE_MASK);
+}
+
+
+ 
  
 TResult readPacket(TPacket *packet)
 {
@@ -214,41 +210,6 @@ void enablePullups()
   
 }
 
-// Functions to be called by INT0 and INT1 ISRs.
-void leftISR()
-{
-  if(dir == FORWARD) {
-    leftForwardTicks++;
-    }
-  if (dir == BACKWARD) {
-    leftReverseTicks++; 
-    }
-  if (dir == LEFT) {
-    leftReverseTicksTurns++; 
-    }
-  if (dir == RIGHT) {
-    leftForwardTicksTurns++; 
-    }
-}
-
-void rightISR()
-{
-  
-  if(dir == FORWARD) {
-    rightForwardTicks++;
-    forwardDist = (unsigned long) ((float) rightForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
-    }
-  if (dir == BACKWARD) {
-    rightReverseTicks++; 
-    reverseDist = (unsigned long) ((float) rightReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
-    }
-  if (dir == LEFT) {
-    rightForwardTicksTurns++; 
-    }
-  if (dir == RIGHT) {
-    rightReverseTicksTurns++; 
-    }
-}
 
 // Set up the external interrupt pins INT0 and INT1
 // for falling edge triggered. Use bare-metal.
@@ -263,18 +224,6 @@ void setupEINT()
   sei();
 }
 
-// Implement the external interrupt ISRs below.
-// INT0 ISR should call leftISR while INT1 ISR
-// should call rightISR.
-ISR(INT0_vect)
-{
-  leftISR();
-}
-
-ISR(INT1_vect)
-{
-  rightISR();
-}
 
 // Implement INT0 and INT1 ISRs above.
 
@@ -325,259 +274,6 @@ void writeSerial(const unsigned char *buffer, int len)
   Serial.write(buffer, len);
 }
 
-/*
- * 
- * Alex Colour Sensor
- * 
- */
-void setupADC()
-{
-  PRR &= ~(1 << PRADC); //Turn on Power for ADC
-  ADCSRA |= ((1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0));
-  ADMUX |= ((1 << REFS0) | (1 << ADLAR)); //Left adjusted to read 8 bits at A0
-  
-}
-
-int startADC()
-{
-  ADCSRA |= (1 << ADSC);
-  while(ADCSRA & (1 << ADSC));
-  int adcvalue = ADCH;
-  return adcvalue;
-}
-
-int colourValue()
-{
-  int readings[5];
-  int sum = 0;
-  int finalvalue;
-  setupADC();
-  for(int i = 0; i < 5; i++)
-  {
-    delay(100);
-    readings[i] = startADC();
-    sum += readings[i];
-  }
-  finalvalue = sum / 5;
-  PRR |= (1 << PRADC); //Turn off power for ADC
-  return finalvalue;
-}
-
-char findColour()
-{
-  int colour[3] = {0,0,0};
-  //Setup Red and Green LED at A1 and A2
-  DDRC |= ((1 << 2) | (1 << 1));
-  colour[0] = colourValue();
-  
-  //On Red
-  PORTC |= (1 << 1);
-  colour[1] = colourValue();
-
-  //Off Red and ON Green
-  PORTC &= ~(1 << 1);
-  PORTC |= (1 << 2);
-  colour[2] = colourValue();
-
-  //Off Green
-  PORTC &= ~(1 << 2);
-
-  if(colour[2] > colour[1])
-  {
-    Serial.print(colour[0]);
-    Serial.print(", ");
-    Serial.print(colour[1]);
-    Serial.print(", ");
-    Serial.println(colour[2]);
-    return "R";
-  }
-  else
-  {
-    Serial.print(colour[0]);
-    Serial.print(", ");
-    Serial.print(colour[1]);
-    Serial.print(", ");
-    Serial.println(colour[2]);
-    return "G";
-  }
-  
-}
-/*
- * Alex's motor drivers.
- * 
- */
-
-// Set up Alex's motors. Right now this is empty, but
-// later you will replace it with code to set up the PWMs
-// to drive the motors.
-void setupMotors()
-{
-  /* Our motor set up is:  
-   *    A1IN - Pin 5, PD5, OC0B
-   *    A2IN - Pin 6, PD6, OC0A
-   *    B1IN - Pin 10, PB2, OC1B
-   *    B2In - pIN 11, PB3, OC2A
-   */
-}
-
-// Start the PWM for Alex's motors.
-// We will implement this later. For now it is
-// blank.
-void startMotors()
-{
-  
-}
-
-// Convert percentages to PWM values
-int pwmVal(float speed)
-{
-  if(speed < 0.0)
-    speed = 0;
-
-  if(speed > 100.0)
-    speed = 100.0;
-
-  return (int) ((speed / 100.0) * 255.0);
-}
-
-// Move Alex forward "dist" cm at speed "speed".
-// "speed" is expressed as a percentage. E.g. 50 is
-// move forward at half speed.
-// Specifying a distance of 0 means Alex will
-// continue moving forward indefinitely.
-void forward(float dist, float speed)
-{
-  dir = FORWARD;
-  int val = pwmVal(speed);
-  
-  if (dist >0 )
-    deltaDist = dist;
-  else
-    deltaDist = 9999999;
-    
-  newDist = forwardDist + deltaDist;
-
-  // For now we will ignore dist and move
-  // forward indefinitely. We will fix this
-  // in Week 9.
-
-  // LF = Left forward pin, LR = Left reverse pin
-  // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
-  
-  analogWrite(LF, val);
-  analogWrite(RF, val);
-  analogWrite(LR, 0);
-  analogWrite(RR, 0);
-}
-
-// Reverse Alex "dist" cm at speed "speed".
-// "speed" is expressed as a percentage. E.g. 50 is
-// reverse at half speed.
-// Specifying a distance of 0 means Alex will
-// continue reversing indefinitely.
-void reverse(float dist, float speed)
-{
-  dir = BACKWARD;
-  int val = pwmVal(speed);
-  
-  if (dist >0 )
-    deltaDist = dist;
-  else
-    deltaDist = 9999999;
-    
-  newDist = forwardDist + deltaDist;
-  
-  // For now we will ignore dist and 
-  // reverse indefinitely. We will fix this
-  // in Week 9.
-
-  // LF = Left forward pin, LR = Left reverse pin
-  // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
-  analogWrite(LR, val);
-  analogWrite(RR, val);
-  analogWrite(LF, 0);
-  analogWrite(RF, 0);
-}
-
-unsigned long computeDeltaTicks(float ang)
-{
-  unsigned long ticks = (unsigned long) ((ang * AlexCirc * COUNTS_PER_REV)/(360.0*WHEEL_CIRC));
-
-  return ticks;
-}
-
-// Turn Alex left "ang" degrees at speed "speed".
-// "speed" is expressed as a percentage. E.g. 50 is
-// turn left at half speed.
-// Specifying an angle of 0 degrees will cause Alex to
-// turn left indefinitely.
-void left(float ang, float speed)
-{
-  dir = LEFT;
-  int val = pwmVal(speed);
-  
-  if(ang==0)
-    {
-      deltaTicks = 99999999;
-    }
-  else
-    {
-      deltaTicks = computeDeltaTicks(ang);
-    }
-  targetTicks = leftReverseTicksTurns + deltaTicks;
-
-  // For now we will ignore ang. We will fix this in Week 9.
-  // We will also replace this code with bare-metal later.
-  // To turn left we reverse the left wheel and move
-  // the right wheel forward.
-  analogWrite(LR, val);
-  analogWrite(RF, val);
-  analogWrite(LF, 0);
-  analogWrite(RR, 0);
-}
-
-// Turn Alex right "ang" degrees at speed "speed".
-// "speed" is expressed as a percentage. E.g. 50 is
-// turn left at half speed.
-// Specifying an angle of 0 degrees will cause Alex to
-// turn right indefinitely.
-void right(float ang, float speed)
-{
-  dir = RIGHT;
-  int val = pwmVal(speed);
-  
-  if(ang==0)
-    {
-      deltaTicks = 99999999;
-    }
-  else
-    {
-      deltaTicks = computeDeltaTicks(ang);
-    }
-  targetTicks = rightReverseTicksTurns + deltaTicks;
-
-  // For now we will ignore ang. We will fix this in Week 9.
-  // We will also replace this code with bare-metal later.
-  // To turn right we reverse the right wheel and move
-  // the left wheel forward.
-  analogWrite(RR, val);
-  analogWrite(LF, val);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
-}
-
-// Stop Alex. To replace with bare-metal code later.
-void stop()
-{
-  dir = STOP;
-  
-  analogWrite(LF, 0);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
-  analogWrite(RR, 0);
-}
 
 /*
  * Alex's setup and run codes
@@ -666,7 +362,7 @@ void handleCommand(TPacket *command)
 
     case COMMAND_TURN_LEFT:
       sendOK();
-      forward((float) command->params[0], (float) command->params[1]);
+      left((float) command->params[0], (float) command->params[1]);
       break;
 
     case COMMAND_TURN_RIGHT:
@@ -750,7 +446,11 @@ void setup() {
   startMotors();
   enablePullups();
   initializeState();
+  WDT_off();
+  setupPowerSaving();
   sei();
+  calibrateMotors();
+  putArduinoToIdle();
 }
 
 void handlePacket(TPacket *packet)
@@ -776,14 +476,6 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-/*
-// Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
-
- //forward(0, 100);
-
-// Uncomment the code below for Week 9 Studio 2
-
-
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
 
@@ -800,70 +492,5 @@ void loop() {
       if(result == PACKET_CHECKSUM_BAD)
       {
         sendBadChecksum();
-      } 
-
-
-  //forward or backward
-  if(deltaDist > 0)
-    {
-      if(dir==FORWARD)
-      {
-        if(forwardDist > newDist)
-        {
-          deltaDist=0;
-          newDist=0;
-          stop();
-        }
       }
-      else if(dir == BACKWARD)
-      {
-        if(reverseDist > newDist)
-        {
-          deltaDist=0;
-          newDist=0;
-          stop();
-        }
-      }
-      else if(dir == STOP)
-      {
-        deltaDist=0;
-        newDist=0;
-        stop();
-      }
-    }  
-
-  //left or right turn
-  if (deltaTicks > 0)
-    {
-      if(dir == LEFT)
-        {
-          if(leftReverseTicksTurns >= targetTicks)
-            {
-              deltaTicks = 0;
-              targetTicks = 0;
-              stop();
-            }
-        }
-
-       else if(dir == RIGHT)
-        {
-          if(rightReverseTicksTurns >= targetTicks)
-            {
-              deltaTicks = 0;
-              targetTicks = 0;
-              stop();
-            }
-        }
-
-       else if(dir == STOP)
-        {
-          deltaTicks = 0;
-          targetTicks = 0;
-          stop();
-        }
-    }
-    */
-    findColour();
-    
-     
 }
