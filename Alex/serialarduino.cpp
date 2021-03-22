@@ -35,7 +35,7 @@ void startSerial()
 
 }
 
-int readserial(char *buffer)
+int readSerial(char *buffer)
 {
 	int count = 0;
 	while(UCSR0A & (1 << 7))
