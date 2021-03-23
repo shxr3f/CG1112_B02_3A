@@ -31,6 +31,8 @@ volatile unsigned long leftForwardTicksTurns;
 volatile unsigned long rightForwardTicksTurns;
 volatile unsigned long rightReverseTicksTurns;
 volatile unsigned long leftReverseTicksTurns;
+volatile bool calibrateRight =  false;
+volatile bool calibrateLeft = false;
 
 // Store the revolutions on Alex's left
 // and right wheels
@@ -79,25 +81,42 @@ ISR(TIMER1_COMPB_vect)
 void calibrateMotors()
 {
   //time taken for 1 tick
-  caliTime = (1000 * CALI_AVGTICKS) / (HALFSPEED * COUNTS_PER_REV);
+  sideDone = false;
+  movementDone = false;
+  calibrateLeft = true;
+  caliTime = (1000 * 60 * CALI_AVGTICKS * HALFSPEED) / COUNTS_PER_REV;
+  Serial.println(caliTime);
   //Calibration for left motor
   deltaTicks = (COUNTS_PER_REV * CALI_ROUNDS);
   targetTicks = leftForwardTicksTurns + deltaTicks;
+  Serial.println(targetTicks);
   dir = CALIBRATE;
-  OCR0A = 127;
+  OCR0A = 200;
   OCR0B = 0;
   OCR1A = 255;
   OCR1B = 255;
+  startTime = millis();
   startMotors();
   while (!movementDone) {}
-
+  stop();
   //calibration for right motor
+            calibrateLeft = false;
+            calibrateRight = true;
   sideDone = false;
   movementDone = false;
   targetTicks = rightForwardTicksTurns + deltaTicks;
-  RF = 255;
-  RR = 0;
+  OCR0A = 255;
+  OCR0B = 255;
+  OCR1A = 200;
+  OCR1B = 0;
+  startTime = millis();
+  dir = CALIBRATE;
+  startMotors();
   while (!movementDone) {}
+  startTime = millis();
+  while (millis() - startTime < STOPDELAY) {}
+  dir = STOP;
+  stop();
 }
 
 
@@ -118,7 +137,7 @@ void setupMotors()
   TCCR1A |= 0b00000001;
   
   TIMSK0 |= 0b110;
-  TIMSK1 |= 0b110;
+  TIMSK1 |= 0b110; 
   /* Our motor set up is:  
    *    A1IN - Pin 5, PD5, OC0B
    *    A2IN - Pin 6, PD6, OC0A
@@ -138,7 +157,7 @@ void leftISR()
       leftForwardTicks++;
       if (leftForwardTicks == targetTicks)
       {        
-        TCCR0A |= (COMPA | COMPB);
+        TCCR0A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -157,7 +176,7 @@ void leftISR()
       leftReverseTicks++; 
       if (leftReverseTicks == targetTicks)
       {
-        TCCR0A |= (COMPA | COMPB);
+        TCCR0A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -176,7 +195,7 @@ void leftISR()
       leftReverseTicksTurns++; 
       if (leftReverseTicksTurns == targetTicks)
       {
-        TCCR0A |= (COMPA | COMPB);
+        TCCR0A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -194,7 +213,7 @@ void leftISR()
       leftForwardTicksTurns++; 
       if (leftForwardTicksTurns == targetTicks)
       {
-        TCCR0A |= (COMPA | COMPB);
+        TCCR0A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -209,27 +228,35 @@ void leftISR()
       break;
 
       case CALIBRATE:
-        if (!sideDone)
+        if (!sideDone && calibrateLeft)
         {
           leftForwardTicksTurns++;
+//          Serial.println(leftForwardTicksTurns);
           if (leftForwardTicksTurns == targetTicks)
           {
             sideDone = true;
-            adjLeft = (double)LF / 127;
-            LR = LF;
-            LF = 0;
+            adjLeft = (double)OCR0A / 200;
+            Serial.println(millis());
+            Serial.println(adjLeft);
+            OCR0B = OCR0A;
+            OCR0A = 0;
             targetTicks = leftReverseTicksTurns + deltaTicks;
           }
-          else if (leftForwardTicksTurns % CALI_ROUNDS == 0)
+          else if (leftForwardTicksTurns % CALI_AVGTICKS == 0)
           {
-            if (millis() - startTime > caliTime)
+            if (millis() - startTime < caliTime)
             {
-              LF--;
+              if (OCR0A > MINTORQUE)
+              OCR0A--;
             }
-            else if (millis() - startTime < caliTime)
+            else if (millis() - startTime > caliTime)
             {
-              LF++;
+              if (OCR0A <= 255)
+              {
+                OCR0A++;
+              }
             }
+            startTime = millis();
           }
         }
         else
@@ -237,7 +264,8 @@ void leftISR()
           leftReverseTicksTurns++;
           if (leftReverseTicksTurns == targetTicks)
           {
-            LF = LR = 255;
+            OCR0A = 255;
+            OCR0B = 255;
             movementDone = true;
           }
         }
@@ -248,13 +276,15 @@ void leftISR()
 
 void rightISR()
 {
+
   switch(dir)
   {
     case FORWARD:
       rightForwardTicks++;
+      
       if (rightForwardTicks == targetTicks)
       {        
-        TCCR1A |= (COMPA | COMPB);
+        TCCR1A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -273,7 +303,7 @@ void rightISR()
       rightReverseTicks++; 
       if (rightReverseTicks == targetTicks)
       {
-        TCCR1A |= (COMPA | COMPB);
+        TCCR1A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -292,7 +322,7 @@ void rightISR()
       rightForwardTicksTurns++; 
       if (rightForwardTicksTurns == targetTicks)
       {
-        TCCR1A |= (COMPA | COMPB);
+        TCCR1A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -310,7 +340,7 @@ void rightISR()
       rightReverseTicksTurns++; 
       if (rightReverseTicksTurns == targetTicks)
       {
-        TCCR1A |= (COMPA | COMPB);
+        TCCR1A |= COMPAB;
         if (sideDone)
         {
           startTime = millis();
@@ -325,27 +355,34 @@ void rightISR()
       break;
 
       case CALIBRATE:
-        if (!sideDone)
+        if (!sideDone && calibrateRight)
         {
           rightForwardTicksTurns++;
           if (rightForwardTicksTurns == targetTicks)
           {
             sideDone = true;
-            adjRight = (double)RF / 127;
-            RR = RF;
-            RF = 0;
+            adjRight = (double)OCR1A / 200;
+            Serial.println(millis());
+            Serial.println(adjRight);
+            OCR1B = OCR1A;
+            OCR1A = 0;
             targetTicks = rightReverseTicksTurns + deltaTicks;
           }
-          else if (rightForwardTicksTurns % CALI_ROUNDS == 0)
+          else if (rightForwardTicksTurns % CALI_AVGTICKS == 0)
           {
-            if (millis() - startTime > caliTime)
+            if (millis() - startTime < caliTime)
             {
-              RF--;
+              if (OCR1A > MINTORQUE)
+              OCR1A--;
             }
-            else if (millis() - startTime < caliTime)
+            else if (millis() - startTime > caliTime)
             {
-              RF++;
+              if (OCR1A <= 255)
+              {
+                OCR1A++;
+              }
             }
+            startTime = millis();
           }
         }
         else
@@ -353,7 +390,9 @@ void rightISR()
           rightReverseTicksTurns++;
           if (rightReverseTicksTurns == targetTicks)
           {
-            RF = RR = 255;
+            OCR1A = 255;
+            OCR1B = 255;
+            calibrateRight =  false;
             movementDone = true;
           }
         }
@@ -365,26 +404,17 @@ void rightISR()
 // Implement the external interrupt ISRs below.
 // INT0 ISR should call leftISR while INT1 ISR
 // should call rightISR.
-ISR(INT0_vect)
-{
-  leftISR();
-}
 
-ISR(INT1_vect)
-{
-  rightISR();
-}
 
 // Start the PWM for Alex's motors.
 // We will implement this later. For now it is
 // blank.
 void startMotors()
 {
-  
-  TCCR0B |= 0b00000011;
-  TCCR1B |= 0b00000011;
   PRR    &= !(PRR_TIMER0_MASK);
   PRR    &= !(PRR_TIMER1_MASK);
+  TCCR0B |= 0b00000011;
+  TCCR1B |= 0b00000011;
   switch(dir)
   {
     case FORWARD:
@@ -408,15 +438,15 @@ void startMotors()
       break;
 
     case STOP:
-      TCCR0A  = 0b00000001;
-      TCCR1A  = 0b00000001;
-      break; 
-
-    case CALIBRATE:
       TCCR0A  |= COMPA;
       TCCR0A  |= COMPB;
       TCCR1A  |= COMPA;
       TCCR1A  |= COMPB;
+      break; 
+
+    case CALIBRATE:
+      TCCR0A  |= 0b10100001;
+      TCCR1A  |= 0b10100001;
       break;
   }
 }
@@ -441,11 +471,9 @@ int pwmVal(float speed)
 void forward(float dist, float speed)
 {
   dir = FORWARD;
-
   movementDone = false;
   sideDone = false;
   int val = pwmVal(speed);
-  
   if (dist >0 )
   {
     deltaTicks = ((double)dist * COUNTS_PER_REV / WHEEL_CIRC);
@@ -455,13 +483,11 @@ void forward(float dist, float speed)
     deltaTicks = 9999999;
   }
   targetTicks = leftForwardTicks + deltaTicks;
-
-  //TODO: add ticks calculation
+  OCR0A = val * adjLeft;
+  OCR1A = val * adjRight;
+  OCR0B = val * adjLeft;
+  OCR1B = val * adjRight;
   startMotors();
-  LF = val * adjLeft;
-  RF = val * adjRight;
-  LR = 0;
-  RR = 0;
   while (!movementDone) {}
   stop();
 }
@@ -475,11 +501,10 @@ void reverse(float dist, float speed)
 {
 
   dir = BACKWARD;
-
   movementDone = false;
   sideDone = false;
   int val = pwmVal(speed);
-  
+
   if (dist >0 )
   {
     deltaTicks = ((double)dist * COUNTS_PER_REV / WHEEL_CIRC);
@@ -489,13 +514,11 @@ void reverse(float dist, float speed)
     deltaTicks = 9999999;
   }
   targetTicks = leftReverseTicks + deltaTicks;
-
-  //TODO: add ticks calculation
+  OCR0A = val * adjLeft;
+  OCR1A = val * adjRight;
+  OCR0B = val * adjLeft;
+  OCR1B = val * adjRight;
   startMotors();
-  LR = val * adjLeft;
-  RR = val * adjRight;
-  LF = 0;
-  RF = 0;
   while (!movementDone) {}
   stop();
 }
@@ -530,13 +553,12 @@ void left(float ang, float speed)
   targetTicks = leftReverseTicksTurns + deltaTicks;
 
   //TODO: add ticks calculation
-  startMotors();
-  LR = val * adjLeft;
-  RF = val * adjRight;
-  LF = 0;
-  RR = 0;
+  OCR0A = val * adjLeft;
+  OCR1A = val * adjRight;
+  OCR0B = val * adjLeft;
+  OCR1B = val * adjRight;
+  startMotors();  
   while (!movementDone) {}
-  
   stop();
 }
 
@@ -561,12 +583,12 @@ void right(float ang, float speed)
     deltaTicks = 9999999;
   }
   targetTicks = rightReverseTicksTurns + deltaTicks;
-
+  
+  OCR0A = val * adjLeft;
+  OCR1A = val * adjRight;
+  OCR0B = val * adjLeft;
+  OCR1B = val * adjRight;
   startMotors();
-  RR = val * adjLeft;
-  LF = val * adjRight;
-  RF = 0;
-  LR = 0;
   while (!movementDone) {}
   
   stop();
@@ -576,16 +598,13 @@ void right(float ang, float speed)
 void stop()
 {
   dir = STOP;
-  //Reset comparator compare to values
-  OCR0A = 0;
-  OCR0B = 0;
-  OCR1A = 0;
-  OCR1B = 0;
+  TCNT0 = 0;
+  TCNT1 = 0;
   //turn off all comparators
   TCCR0B &= !(0b00000011);
   TCCR1B &= !(0b00000011);
-  TCCR0A &= !(0b10100000);
-  TCCR1A &= !(0b10100000);
-  //turn off timers
-  PRR   |= (PRR_TIMER0_MASK | PRR_TIMER2_MASK);
+  TCCR0A &= !COMPA;
+  TCCR0A &= !COMPB;
+  TCCR1A &= !COMPA;
+  TCCR1A &= !COMPB;
 }

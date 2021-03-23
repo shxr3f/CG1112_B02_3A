@@ -17,15 +17,12 @@
 #define SMCR_IDLE_MODE_MASK     0b11110001
 #define COMPA                   0b10000000
 #define COMPB                   0b00100000
+#define COMPAB                  0b10100000
 
 
 //Alex movement parameters
 
 //Timer definitions for motors
-#define LF                      OCR0A
-#define LR                      OCR0B
-#define RF                      OCR1A
-#define RR                      OCR1B
 
 //Distance parameters
 #define COUNTS_PER_REV          198
@@ -37,11 +34,13 @@
 //amt of time Alex should stop for to prevent unwanted movement
 #define STOPDELAY 50
 //max speed in RPM (i.e. when 100% speed is sent)
-#define HALFSPEED 1
+#define HALFSPEED  10
 //Number of rounds to do calibration with
-#define CALI_ROUNDS 10
+#define CALI_ROUNDS  5
 //Number of ticks to calibrate around
-#define CALI_AVGTICKS 5
+#define CALI_AVGTICKS  10
+
+#define MINTORQUE 140
 
 //Time to wait in between ADC readings for the colour sensor
 #define ADCDELAY 100

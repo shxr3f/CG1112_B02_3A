@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
@@ -436,8 +435,8 @@ void setup() {
   startMotors();
   enablePullups();
   initializeState();
-  WDT_off();
-  setupPowerSaving();
+//  WDT_off();
+//  setupPowerSaving();
   sei();
   calibrateMotors();
 }
@@ -463,12 +462,20 @@ void handlePacket(TPacket *packet)
       break;
   }
 }
+ISR(INT0_vect)
+{
+  leftISR();
+}
 
+ISR(INT1_vect)
+{
+  rightISR();
+}
 void loop() {
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
   
-  putArduinoToIdle();
+  //putArduinoToIdle();
 
   TResult result = readPacket(&recvPacket);
   
