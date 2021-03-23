@@ -1,5 +1,5 @@
-#ifndef __REGISTERS_INC__
-#define __REGISTERS_INC__
+#ifndef __PARAMETERS_INC__
+#define __PARAMETERS_INC__
 
 //General parameters for Alex
 
@@ -19,6 +19,9 @@
 #define COMPB                   0b00100000
 #define COMPAB                  0b10100000
 
+//Alex serial definitions
+#define UDRIEMASK               0b00010000
+
 
 //Alex movement parameters
 
@@ -32,13 +35,15 @@
 #define ALEX_BREADTH  6
 
 //amt of time Alex should stop for to prevent unwanted movement
-#define STOPDELAY 50
+// in MICROSECONDS
+#define STOPDELAY 500
 //max speed in RPM (i.e. when 100% speed is sent)
-#define HALFSPEED  10
+#define CALSPEED  10
+#define CAL_COUNT 200
 //Number of rounds to do calibration with
-#define CALI_ROUNDS  5
+#define CAL_ROUNDS  5
 //Number of ticks to calibrate around
-#define CALI_AVGTICKS  10
+#define CAL_AVGTICKS  10
 
 #define MINTORQUE 140
 

@@ -9,7 +9,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <math.h>
-#include <Arduino.h>
+#include "delaytimer.h"
 
 
 float AlexDiagonal = 0.0;
@@ -48,7 +48,7 @@ unsigned long targetTicks;
 
 unsigned long startTime;
 unsigned long endTime;
-unsigned int  caliTime;
+unsigned long  caliTime;
 double adjLeft;
 double adjRight;
 
@@ -59,21 +59,6 @@ double adjRight;
  * 
  */
 
-ISR(TIMER0_COMPA_vect)
-{ 
-} 
-
-ISR(TIMER0_COMPB_vect)
-{ 
-}
-
-ISR(TIMER1_COMPA_vect)
-{ 
-} 
-
-ISR(TIMER1_COMPB_vect)
-{ 
-}
 
  // Stop motors and turn off timers
 
@@ -81,41 +66,41 @@ ISR(TIMER1_COMPB_vect)
 void calibrateMotors()
 {
   //time taken for 1 tick
+  startTimer();
   sideDone = false;
   movementDone = false;
   calibrateLeft = true;
-  caliTime = (1000 * 60 * CALI_AVGTICKS * HALFSPEED) / COUNTS_PER_REV;
-  Serial.println(caliTime);
+  caliTime = (10000 * CAL_AVGTICKS * CALSPEED) / (COUNTS_PER_REV * 60);
   //Calibration for left motor
-  deltaTicks = (COUNTS_PER_REV * CALI_ROUNDS);
+  deltaTicks = (COUNTS_PER_REV * CAL_ROUNDS);
   targetTicks = leftForwardTicksTurns + deltaTicks;
-  Serial.println(targetTicks);
   dir = CALIBRATE;
-  OCR0A = 200;
+  OCR0A = CAL_COUNT;
   OCR0B = 0;
   OCR1A = 255;
   OCR1B = 255;
-  startTime = millis();
+  startTime = _timerTicks;
   startMotors();
   while (!movementDone) {}
   stop();
   //calibration for right motor
-            calibrateLeft = false;
-            calibrateRight = true;
+  calibrateLeft = false;
+  calibrateRight = true;
   sideDone = false;
   movementDone = false;
   targetTicks = rightForwardTicksTurns + deltaTicks;
   OCR0A = 255;
   OCR0B = 255;
-  OCR1A = 200;
+  OCR1A = CAL_COUNT;
   OCR1B = 0;
-  startTime = millis();
+  startTime = _timerTicks;
   dir = CALIBRATE;
   startMotors();
   while (!movementDone) {}
-  startTime = millis();
-  while (millis() - startTime < STOPDELAY) {}
+  startTime = _timerTicks;
+  while (_timerTicks - startTime < STOPDELAY) {}
   dir = STOP;
+  stopTimer();
   stop();
 }
 
@@ -160,8 +145,8 @@ void leftISR()
         TCCR0A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           forwardDist = leftForwardTicks * (WHEEL_CIRC);
          movementDone = true;
         }
@@ -179,8 +164,8 @@ void leftISR()
         TCCR0A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           reverseDist = leftReverseTicks * (WHEEL_CIRC);
           movementDone = true;
         }
@@ -198,8 +183,8 @@ void leftISR()
         TCCR0A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           movementDone = true;
         }
         else
@@ -216,8 +201,8 @@ void leftISR()
         TCCR0A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           movementDone = true;
         }
         else
@@ -236,27 +221,25 @@ void leftISR()
           {
             sideDone = true;
             adjLeft = (double)OCR0A / 200;
-            Serial.println(millis());
-            Serial.println(adjLeft);
             OCR0B = OCR0A;
             OCR0A = 0;
             targetTicks = leftReverseTicksTurns + deltaTicks;
           }
-          else if (leftForwardTicksTurns % CALI_AVGTICKS == 0)
+          else if (leftForwardTicksTurns % CAL_AVGTICKS == 0)
           {
-            if (millis() - startTime < caliTime)
+            if (_timerTicks - startTime < caliTime)
             {
               if (OCR0A > MINTORQUE)
               OCR0A--;
             }
-            else if (millis() - startTime > caliTime)
+            else if (_timerTicks - startTime > caliTime)
             {
               if (OCR0A <= 255)
               {
                 OCR0A++;
               }
             }
-            startTime = millis();
+            startTime = _timerTicks;
           }
         }
         else
@@ -287,8 +270,8 @@ void rightISR()
         TCCR1A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           forwardDist = rightForwardTicks * (WHEEL_CIRC);
          movementDone = true;
         }
@@ -306,8 +289,8 @@ void rightISR()
         TCCR1A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           reverseDist = rightReverseTicks * (WHEEL_CIRC);
           movementDone = true;
         }
@@ -325,8 +308,8 @@ void rightISR()
         TCCR1A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           movementDone = true;
         }
         else
@@ -343,8 +326,8 @@ void rightISR()
         TCCR1A |= COMPAB;
         if (sideDone)
         {
-          startTime = millis();
-          while (millis() < (startTime + STOPDELAY)) {}
+          startTime = _timerTicks;
+          while (_timerTicks < (startTime + STOPDELAY)) {}
           movementDone = true;
         }
         else
@@ -362,27 +345,25 @@ void rightISR()
           {
             sideDone = true;
             adjRight = (double)OCR1A / 200;
-            Serial.println(millis());
-            Serial.println(adjRight);
             OCR1B = OCR1A;
             OCR1A = 0;
             targetTicks = rightReverseTicksTurns + deltaTicks;
           }
-          else if (rightForwardTicksTurns % CALI_AVGTICKS == 0)
+          else if (rightForwardTicksTurns % CAL_AVGTICKS == 0)
           {
-            if (millis() - startTime < caliTime)
+            if (_timerTicks - startTime < caliTime)
             {
               if (OCR1A > MINTORQUE)
               OCR1A--;
             }
-            else if (millis() - startTime > caliTime)
+            else if (_timerTicks - startTime > caliTime)
             {
               if (OCR1A <= 255)
               {
                 OCR1A++;
               }
             }
-            startTime = millis();
+            startTime = _timerTicks;
           }
         }
         else
@@ -411,8 +392,8 @@ void rightISR()
 // blank.
 void startMotors()
 {
-  PRR    &= !(PRR_TIMER0_MASK);
-  PRR    &= !(PRR_TIMER1_MASK);
+  PRR    &= ~(PRR_TIMER0_MASK);
+  PRR    &= ~(PRR_TIMER1_MASK);
   TCCR0B |= 0b00000011;
   TCCR1B |= 0b00000011;
   switch(dir)
@@ -601,10 +582,10 @@ void stop()
   TCNT0 = 0;
   TCNT1 = 0;
   //turn off all comparators
-  TCCR0B &= !(0b00000011);
-  TCCR1B &= !(0b00000011);
-  TCCR0A &= !COMPA;
-  TCCR0A &= !COMPB;
-  TCCR1A &= !COMPA;
-  TCCR1A &= !COMPB;
+  TCCR0B &= ~(0b00000011);
+  TCCR1B &= ~(0b00000011);
+  TCCR0A &= ~COMPA;
+  TCCR0A &= ~COMPB;
+  TCCR1A &= ~COMPA;
+  TCCR1A &= ~COMPB;
 }

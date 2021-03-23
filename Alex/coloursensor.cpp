@@ -4,8 +4,8 @@
 #include <avr/sleep.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <Arduino.h>
 #include "parameters.h"
+#include "delaytimer.h"
 
 int startADC()
 {
@@ -25,6 +25,7 @@ void setupADC()
 
 int colourValue()
 {
+  startTimer();
   int readings[5];
   int sum = 0;
   int finalvalue;
@@ -32,14 +33,15 @@ int colourValue()
   setupADC();
   for(int i = 0; i < 5; i++)
   {
-    lastTime = millis();
-    while( millis() < lastTime + ADCDELAY)
+    lastTime = _timerTicks;
+    while( _timerTicks < lastTime + ADCDELAY)
     {}
     readings[i] = startADC();
     sum += readings[i];
   }
   finalvalue = sum / 5;
   PRR |= (1 << PRADC); //Turn off power for ADC
+  stopTimer();
   return finalvalue;
 }
 
@@ -64,20 +66,10 @@ char findColour()
 
   if(colour[2] > colour[1])
   {
-    Serial.print(colour[0]);
-    Serial.print(", ");
-    Serial.print(colour[1]);
-    Serial.print(", ");
-    Serial.println(colour[2]);
     return "R";
   }
   else
   {
-    Serial.print(colour[0]);
-    Serial.print(", ");
-    Serial.print(colour[1]);
-    Serial.print(", ");
-    Serial.println(colour[2]);
     return "G";
   }
 }

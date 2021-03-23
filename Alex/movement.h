@@ -43,8 +43,6 @@ extern volatile unsigned long reverseDist;
 extern unsigned long deltaTicks;
 extern unsigned long targetTicks;
 
-//amt of time Alex should stop for to prevent unwanted movement
-#define STOPDELAY 50
 extern unsigned long startTime;
 extern unsigned long endTime;
 

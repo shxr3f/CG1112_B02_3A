@@ -7,6 +7,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "movement.h"
+#include "serialarduino.h"
+#include "delaytimer.h"
 #include "parameters.h"
 
 
@@ -15,6 +17,29 @@
  * Alex Communication Routines.
  * 
  */
+
+
+ISR(TIMER0_COMPA_vect)
+{ 
+} 
+
+ISR(TIMER0_COMPB_vect)
+{ 
+}
+
+ISR(TIMER1_COMPA_vect)
+{ 
+} 
+
+ISR(TIMER1_COMPB_vect)
+{ 
+}
+
+ISR(TIMER2_COMPA_vect)
+{ 
+  _timerTicks++;
+}
+
 
 void WDT_off(void)
 {
@@ -31,25 +56,25 @@ void setupPowerSaving()
 {
   //disable TWI, TIM1 and SPI interfaces
   PRR    |= (PRR_TWI_MASK | PRR_SPI_MASK | PRR_TIMER2_MASK);
-  //disable ADC, TIM0 and TIM2
+  //disable ADC
   ADCSRA |= ADCSRA_ADC_MASK;
   PRR    |= (PRR_ADC_MASK);
   //set the Arduino to idle mode
   SMCR   |= SMCR_IDLE_MODE_MASK;
   //set up Port B Pin 5 and set it to logic LOW
   DDRB   |= (1 << 5);
-  PORTB  &= !(1 << 5);
+  PORTB  &= ~(1 << 5);
   
 }
 
 void putArduinoToIdle()
 {
-  //shut down timer0 and timer2
+  //shut down timer0 and timer1
   PRR |= (PRR_TIMER0_MASK | PRR_TIMER1_MASK);
   //set Arduino to idle mode
   SMCR |= SMCR_SLEEP_ENABLE_MASK;
   sleep_cpu();
-  SMCR &= !(SMCR_SLEEP_ENABLE_MASK);
+  SMCR &= ~(SMCR_SLEEP_ENABLE_MASK);
 }
 
  
@@ -214,56 +239,6 @@ void setupEINT()
 }
 
 
-// Implement INT0 and INT1 ISRs above.
-
-/*
- * Setup and start codes for serial communications
- * 
- */
-// Set up the serial connection. For now we are using 
-// Arduino Wiring, you will replace this later
-// with bare-metal code.
-void setupSerial()
-{
-  // To replace later with bare-metal.
-  Serial.begin(9600);
-}
-
-// Start the serial connection. For now we are using
-// Arduino wiring and this function is empty. We will
-// replace this later with bare-metal code.
-
-void startSerial()
-{
-  // Empty for now. To be replaced with bare-metal code
-  // later on.
-  
-}
-
-// Read the serial port. Returns the read character in
-// ch if available. Also returns TRUE if ch is valid. 
-// This will be replaced later with bare-metal code.
-
-int readSerial(char *buffer)
-{
-
-  int count=0;
-
-  while(Serial.available())
-    buffer[count++] = Serial.read();
-
-  return count;
-}
-
-// Write to the serial port. Replaced later with
-// bare-metal code
-
-void writeSerial(const unsigned char *buffer, int len)
-{
-  Serial.write(buffer, len);
-}
-
-
 /*
  * Alex's setup and run codes
  * 
@@ -332,7 +307,6 @@ void clearOneCounter(int which)
       break;
   } 
 }
-// Intialize Vincet's internal states
 
 void initializeState()
 {
@@ -401,8 +375,6 @@ void waitForHello()
     {
       if(hello.packetType == PACKET_TYPE_HELLO)
       {
-     
-
         sendOK();
         exit=1;
       }
@@ -435,10 +407,10 @@ void setup() {
   startMotors();
   enablePullups();
   initializeState();
-//  WDT_off();
-//  setupPowerSaving();
+  WDT_off();
+  setupPowerSaving();
   sei();
-  calibrateMotors();
+//  calibrateMotors();
 }
 
 void handlePacket(TPacket *packet)
@@ -471,11 +443,12 @@ ISR(INT1_vect)
 {
   rightISR();
 }
+
 void loop() {
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
   
-  //putArduinoToIdle();
+//  putArduinoToIdle();
 
   TResult result = readPacket(&recvPacket);
   
