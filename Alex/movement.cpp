@@ -70,7 +70,7 @@ void calibrateMotors()
   sideDone = false;
   movementDone = false;
   calibrateLeft = true;
-  caliTime = (10000 * CAL_AVGTICKS * CALSPEED) / (COUNTS_PER_REV * 60);
+  caliTime = (1000 * CAL_AVGTICKS * CALSPEED) / (COUNTS_PER_REV * 60);
   //Calibration for left motor
   deltaTicks = (COUNTS_PER_REV * CAL_ROUNDS);
   targetTicks = leftForwardTicksTurns + deltaTicks;

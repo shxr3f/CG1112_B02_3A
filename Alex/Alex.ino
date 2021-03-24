@@ -38,6 +38,17 @@ ISR(TIMER1_COMPB_vect)
 ISR(TIMER2_COMPA_vect)
 { 
   _timerTicks++;
+  TCNT2 = 0;
+}
+
+ISR(INT0_vect)
+{
+  leftISR();
+}
+
+ISR(INT1_vect)
+{
+  rightISR();
 }
 
 
@@ -403,6 +414,7 @@ void setup() {
   setupEINT();
   setupSerial();
   startSerial();
+  setupTimer();
   setupMotors();
   startMotors();
   enablePullups();
@@ -410,6 +422,8 @@ void setup() {
   WDT_off();
   setupPowerSaving();
   sei();
+  
+ startTimer();
 //  calibrateMotors();
 }
 
@@ -434,21 +448,14 @@ void handlePacket(TPacket *packet)
       break;
   }
 }
-ISR(INT0_vect)
-{
-  leftISR();
-}
-
-ISR(INT1_vect)
-{
-  rightISR();
-}
 
 void loop() {
  // put your main code here, to run repeatedly:
+
+ /*
   TPacket recvPacket; // This holds commands from the Pi
   
-//  putArduinoToIdle();
+  putArduinoToIdle();
 
   TResult result = readPacket(&recvPacket);
   
@@ -464,6 +471,6 @@ void loop() {
       {
         sendBadChecksum();
       }
-
+ */
   
 }
