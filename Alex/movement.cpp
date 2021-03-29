@@ -114,8 +114,8 @@ void setupMotors()
   DDRB |= ((1 << 2) | (1 << 1));
   
   //Reset timer2 counters
-  TCNT0  |= 0;
-  TCNT1  |= 0;
+  TCNT0  = 0;
+  TCNT1  = 0;
   
   //Set to 8bit Phase correct PWM mode
   TCCR0A |= 0b00000001;
@@ -145,14 +145,20 @@ void leftISR()
         TCCR0A |= COMPAB;
         if (sideDone)
         {
-          startTime = _timerTicks;
-          while (_timerTicks < (startTime + STOPDELAY)) {}
           forwardDist = leftForwardTicks * (WHEEL_CIRC);
-         movementDone = true;
+          movementDone = true;
         }
         else
         {
           sideDone = true;
+        }
+      }
+      else
+      {
+        if ((leftForwardTicks >= targetTicks) && (rightForwardTicks >= targetTicks) )
+        {
+          TCCR0A |= COMPAB;
+          movementDone = true;
         }
       }
       break;
@@ -164,14 +170,20 @@ void leftISR()
         TCCR0A |= COMPAB;
         if (sideDone)
         {
-          startTime = _timerTicks;
-          while (_timerTicks < (startTime + STOPDELAY)) {}
           reverseDist = leftReverseTicks * (WHEEL_CIRC);
           movementDone = true;
         }
         else
         {
           sideDone = true;
+        }
+      }
+      else
+      {
+        if ((leftReverseTicks >= targetTicks) && (rightReverseTicks >= targetTicks) )
+        {
+          TCCR0A |= COMPAB;
+          movementDone = true;
         }
       }
       break;
@@ -192,6 +204,14 @@ void leftISR()
           sideDone = true;
         }
       }
+      else
+      {
+        if ((leftReverseTicksTurns >= targetTicks) && (rightForwardTicksTurns >= targetTicks) )
+        {
+          TCCR0A |= COMPAB;
+          movementDone = true;
+        }
+      }
       break;
 
     case RIGHT:
@@ -208,6 +228,13 @@ void leftISR()
         else
         {
           sideDone = true;
+        }
+      }
+      else
+      {
+        if ((leftForwardTicksTurns >= targetTicks) && (rightReverseTicksTurns >= targetTicks) )
+        {
+          movementDone = true;
         }
       }
       break;
@@ -280,6 +307,14 @@ void rightISR()
           sideDone = true;
         }
       }
+      else
+      {
+        if ((leftForwardTicks >= targetTicks) && (rightForwardTicks >= targetTicks) )
+        {
+          TCCR1A |= COMPAB;
+          movementDone = true;
+        }
+      }
       break;
 
     case BACKWARD:
@@ -297,6 +332,14 @@ void rightISR()
         else
         {
           sideDone = true;
+        }
+      }
+      else
+      {
+        if ((leftReverseTicks >= targetTicks) && (rightReverseTicks >= targetTicks) )
+        {
+          TCCR1A |= COMPAB;
+          movementDone = true;
         }
       }
       break;
@@ -317,6 +360,14 @@ void rightISR()
           sideDone = true;
         }
       }
+      else
+      {
+        if ((leftReverseTicksTurns >= targetTicks) && (rightForwardTicksTurns >= targetTicks) )
+        {
+          TCCR1A |= COMPAB;
+          movementDone = true;
+        }
+      }
       break;
 
     case RIGHT:
@@ -333,6 +384,14 @@ void rightISR()
         else
         {
           sideDone = true;
+        }
+      }
+      else
+      {
+        if ((leftForwardTicksTurns >= targetTicks) && (rightReverseTicksTurns >= targetTicks) )
+        {
+          TCCR1A |= COMPAB;
+          movementDone = true;
         }
       }
       break;
@@ -419,10 +478,8 @@ void startMotors()
       break;
 
     case STOP:
-      TCCR0A  |= COMPA;
-      TCCR0A  |= COMPB;
-      TCCR1A  |= COMPA;
-      TCCR1A  |= COMPB;
+      TCCR0A  |= COMPAB;
+      TCCR1A  |= COMPAB;
       break; 
 
     case CALIBRATE:
@@ -506,7 +563,7 @@ void reverse(float dist, float speed)
 
 unsigned long computeDeltaTicks(float ang)
 {
-  unsigned long ticks = (unsigned long) ((ang * AlexCirc * COUNTS_PER_REV)/(360.0*WHEEL_CIRC));
+  unsigned long ticks = (unsigned long) ((ang * PI * ALEX_BREADTH/360.0)/WHEEL_CIRC) * COUNTS_PER_REV;
 
   return ticks;
 }
@@ -523,7 +580,7 @@ void left(float ang, float speed)
   sideDone = false;
   int val = pwmVal(speed);
   
-  if (ang >0 )
+  if (ang > 0)
   {
     deltaTicks = computeDeltaTicks(ang);;
   }
@@ -538,7 +595,7 @@ void left(float ang, float speed)
   OCR1A = val * adjRight;
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
-  startMotors();  
+  startMotors();
   while (!movementDone) {}
   stop();
 }
@@ -571,7 +628,7 @@ void right(float ang, float speed)
   OCR1B = val * adjRight;
   startMotors();
   while (!movementDone) {}
-  
+
   stop();
 }
 
