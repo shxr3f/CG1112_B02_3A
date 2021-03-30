@@ -147,7 +147,7 @@ void *receiveThread(void *p)
 				counter=0;
 				handlePacket(&packet);
 			}
-			else 
+			else
 				if(result != PACKET_INCOMPLETE)
 				{
 					printf("PACKET ERROR\n");
@@ -227,6 +227,11 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
+        case 'C':
+        case 'c':
+			commandPacket.command = COMMAND_COLOUR;
+			sendPacket(&commandPacket);
+
 		case 'q':
 		case 'Q':
 			exitFlag=1;
@@ -262,7 +267,7 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats q=exit)\n");
+		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, c = colour sensor, q=exit)\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
