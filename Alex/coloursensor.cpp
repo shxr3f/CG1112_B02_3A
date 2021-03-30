@@ -66,10 +66,10 @@ char findColour()
 
   if(colour[2] > colour[1])
   {
-    return "R";
+    return 'R';
   }
   else
   {
-    return "G";
+    return 'G';
   }
 }

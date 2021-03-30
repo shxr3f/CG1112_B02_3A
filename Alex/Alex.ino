@@ -10,6 +10,7 @@
 #include "serialarduino.h"
 #include "delaytimer.h"
 #include "parameters.h"
+#include "coloursensor.h"
 
 
 /*
@@ -362,6 +363,12 @@ void handleCommand(TPacket *command)
     case COMMAND_CLEAR_STATS:
       sendOK();
       clearOneCounter(command -> params[0]);
+    
+    case COMMAND_COLOUR_SENSOR:
+      sendOK();
+      char colour = clourValue();
+      sendMessage(&colour);
+
         
     default:
       sendBadCommand();
@@ -407,8 +414,6 @@ void setup() {
   // put your setup code here, to run once:
 
   //Compute the diagonal
-  AlexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH * ALEX_BREADTH));
-  AlexCirc = PI * AlexDiagonal;
 
   cli();
   setupEINT();
@@ -422,8 +427,6 @@ void setup() {
   WDT_off();
   setupPowerSaving();
   sei();
-  
- startTimer();
 //  calibrateMotors();
 }
 
@@ -451,8 +454,6 @@ void handlePacket(TPacket *packet)
 
 void loop() {
  // put your main code here, to run repeatedly:
-
- /*
   TPacket recvPacket; // This holds commands from the Pi
   
   putArduinoToIdle();
@@ -471,6 +472,6 @@ void loop() {
       {
         sendBadChecksum();
       }
- */
+ 
   
 }
