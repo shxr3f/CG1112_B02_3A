@@ -22,6 +22,8 @@
 //Alex serial definitions
 #define UDRIEMASK               0b00010000
 
+#define PI                      3.1415
+
 
 //Alex movement parameters
 

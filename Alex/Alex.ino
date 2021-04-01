@@ -366,8 +366,8 @@ void handleCommand(TPacket *command)
     
     case COMMAND_COLOUR_SENSOR:
       sendOK();
-      char colour = clourValue();
-      sendMessage(&colour);
+//      char colour = findColour();
+//      sendMessage(&colour);
 
         
     default:
@@ -422,10 +422,11 @@ void setup() {
   setupTimer();
   setupMotors();
   startMotors();
+  stop();
   enablePullups();
   initializeState();
-  WDT_off();
-  setupPowerSaving();
+//  WDT_off();
+//  setupPowerSaving();
   sei();
 //  calibrateMotors();
 }
@@ -456,7 +457,7 @@ void loop() {
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
   
-  putArduinoToIdle();
+//  putArduinoToIdle();
 
   TResult result = readPacket(&recvPacket);
   

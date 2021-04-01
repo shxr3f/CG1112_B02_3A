@@ -1,5 +1,5 @@
-#ifndef __CONSTANTS_INC__
-#define __CONSTANTS_INC__
+#ifndef __COLOURSENSOR_INC__
+#define __COLOURSENSOR_INC__
 
 
 void setupADC();
