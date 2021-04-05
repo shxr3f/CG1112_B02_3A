@@ -2,9 +2,8 @@
 #define __COLOURSENSOR_INC__
 
 
-void setupADC();
-int startADC();
-int colourValue();
-char findColour();
+void setupSensor();
+void offSensor();
+char colourValue();
 
 #endif

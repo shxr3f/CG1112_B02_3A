@@ -1,4 +1,7 @@
+#include <Wire.h>
+#include "Adafruit_TCS34725.h"
 
+/*
 #include <math.h>
 #include <stdarg.h>
 #include <avr/sleep.h>
@@ -6,7 +9,62 @@
 #include <avr/interrupt.h>
 #include "parameters.h"
 #include "delaytimer.h"
+*/
 
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+
+void setupSensor() {
+  tcs.begin();
+
+  /*
+  Serial.begin(9600);
+
+  if (tcs.begin()) {
+    Serial.println("Found sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+    while (1);
+  }
+
+  // Now we're ready to get readings!
+  */
+}
+
+void offSensor()
+{
+  tcs.disable();
+}
+
+char colourValue()
+{
+  uint16_t r, g, b, c, sum, lux;
+  uint16_t RGB_arr[3] = {0,0,0};
+
+  for(int i = 0; i < 5; i++)
+  {
+    tcs.getRawData(&r, &g, &b, &c);
+    RGB_arr[0] += r;
+    RGB_arr[1] += g;
+    RGB_arr[2] += b;
+  }
+
+  RGB_arr[0] = RGB_arr[0]/5;
+  RGB_arr[1] = RGB_arr[1]/5;
+  RGB_arr[2] = RGB_arr[2]/5;
+
+ if(RGB_arr[0] > RGB_arr[1])
+ {
+  return "R";
+ }
+ else
+ {
+  return "G";
+ }
+}
+
+
+
+/*
 int startADC()
 {
   ADCSRA |= (1 << ADSC);
@@ -73,3 +131,4 @@ char findColour()
     return 'G';
   }
 }
+*/
