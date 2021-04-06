@@ -1,8 +1,8 @@
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
-
-/*
 #include <math.h>
+/*
+
 #include <stdarg.h>
 #include <avr/sleep.h>
 #include <avr/io.h>
@@ -37,22 +37,20 @@ void offSensor()
 
 char colourValue()
 {
-  uint16_t r, g, b, c, sum, lux;
-  uint16_t RGB_arr[3] = {0,0,0};
-
-  for(int i = 0; i < 5; i++)
-  {
+  
+  setupSensor();
+  int16_t r, g, b, c, sum, lux;
+  int16_t RGB_arr[2] = {0,0};
     tcs.getRawData(&r, &g, &b, &c);
     RGB_arr[0] += r;
     RGB_arr[1] += g;
-    RGB_arr[2] += b;
-  }
+  offSensor();
 
-  RGB_arr[0] = RGB_arr[0]/5;
-  RGB_arr[1] = RGB_arr[1]/5;
-  RGB_arr[2] = RGB_arr[2]/5;
-
- if(RGB_arr[0] > RGB_arr[1])
+ if( (RGB_arr[0] - RGB_arr[1]) < 30 && (RGB_arr[0] - RGB_arr[1]) > -30 )
+ {
+  return 'N';
+ }
+ else if (RGB_arr[0] > RGB_arr[1])
  {
   return "R";
  }

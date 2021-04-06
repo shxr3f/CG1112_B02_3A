@@ -414,7 +414,6 @@ void setup() {
   // put your setup code here, to run once:
 
   //Compute the diagonal
-
   cli();
   setupEINT();
   setupSerial();
@@ -429,6 +428,7 @@ void setup() {
 //  setupPowerSaving();
   sei();
 //  calibrateMotors();
+
 }
 
 void handlePacket(TPacket *packet)
@@ -456,7 +456,8 @@ void handlePacket(TPacket *packet)
 void loop() {
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
-  
+
+
 //  putArduinoToIdle();
 
   TResult result = readPacket(&recvPacket);
@@ -473,6 +474,7 @@ void loop() {
       {
         sendBadChecksum();
       }
+     
  
   
 }
