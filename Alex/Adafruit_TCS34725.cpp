@@ -28,6 +28,7 @@
 #endif
 #include <math.h>
 #include <stdlib.h>
+#include "delaytimer.h"
 
 #include "Adafruit_TCS34725.h"
 
@@ -117,7 +118,7 @@ uint16_t Adafruit_TCS34725::read16(uint8_t reg) {
  */
 void Adafruit_TCS34725::enable() {
   write8(TCS34725_ENABLE, TCS34725_ENABLE_PON);
-  delay(3);
+  delayms(3);
   write8(TCS34725_ENABLE, TCS34725_ENABLE_PON | TCS34725_ENABLE_AEN);
   /* Set a delay for the integration time.
     This is only necessary in the case where enabling and then
@@ -127,22 +128,22 @@ void Adafruit_TCS34725::enable() {
     returned */
   switch (_tcs34725IntegrationTime) {
   case TCS34725_INTEGRATIONTIME_2_4MS:
-    delay(3);
+    delayms(3);
     break;
   case TCS34725_INTEGRATIONTIME_24MS:
-    delay(24);
+    delayms(24);
     break;
   case TCS34725_INTEGRATIONTIME_50MS:
-    delay(50);
+    delayms(50);
     break;
   case TCS34725_INTEGRATIONTIME_101MS:
-    delay(101);
+    delayms(101);
     break;
   case TCS34725_INTEGRATIONTIME_154MS:
-    delay(154);
+    delayms(154);
     break;
   case TCS34725_INTEGRATIONTIME_700MS:
-    delay(700);
+    delayms(700);
     break;
   }
 }
@@ -290,22 +291,22 @@ void Adafruit_TCS34725::getRawData(uint16_t *r, uint16_t *g, uint16_t *b,
   /* Set a delay for the integration time */
   switch (_tcs34725IntegrationTime) {
   case TCS34725_INTEGRATIONTIME_2_4MS:
-    delay(3);
+    delayms(3);
     break;
   case TCS34725_INTEGRATIONTIME_24MS:
-    delay(24);
+    delayms(24);
     break;
   case TCS34725_INTEGRATIONTIME_50MS:
-    delay(50);
+    delayms(50);
     break;
   case TCS34725_INTEGRATIONTIME_101MS:
-    delay(101);
+    delayms(101);
     break;
   case TCS34725_INTEGRATIONTIME_154MS:
-    delay(154);
+    delayms(154);
     break;
   case TCS34725_INTEGRATIONTIME_700MS:
-    delay(700);
+    delayms(700);
     break;
   }
 }

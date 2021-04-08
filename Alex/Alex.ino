@@ -363,11 +363,13 @@ void handleCommand(TPacket *command)
     case COMMAND_CLEAR_STATS:
       sendOK();
       clearOneCounter(command -> params[0]);
+      break;
     
     case COMMAND_COLOUR_SENSOR:
       sendOK();
-//      char colour = findColour();
-//      sendMessage(&colour);
+      char colour = colourValue();
+      sendMessage(&colour);
+      break;
 
         
     default:
@@ -411,6 +413,9 @@ void waitForHello()
 }
 
 void setup() {
+  DDRD |= (1 << 7);
+  
+  
   // put your setup code here, to run once:
 
   //Compute the diagonal
@@ -428,7 +433,6 @@ void setup() {
 //  setupPowerSaving();
   sei();
 //  calibrateMotors();
-
 }
 
 void handlePacket(TPacket *packet)
@@ -454,6 +458,8 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
+  colourValue();
+  /*
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
 
@@ -473,7 +479,7 @@ void loop() {
       if(result == PACKET_CHECKSUM_BAD)
       {
         sendBadChecksum();
-      }
+      }*/
      
  
   

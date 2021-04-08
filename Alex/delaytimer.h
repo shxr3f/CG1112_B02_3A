@@ -3,11 +3,11 @@
 
 
 
-extern unsigned long _timerTicks;
+extern volatile unsigned long _timerTicks;
 
 void setupTimer();
 void startTimer();
 void stopTimer();
+void delayms(unsigned long i);
 
 #endif
-

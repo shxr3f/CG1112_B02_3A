@@ -8,19 +8,20 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "parameters.h"
-#include "delaytimer.h"
 */
+#include "delaytimer.h"
+
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 
 void setupSensor() {
   tcs.begin();
-
   /*
+
   Serial.begin(9600);
 
   if (tcs.begin()) {
-    Serial.println("Found sensor");
+//    Serial.println("Found sensor");
   } else {
     Serial.println("No TCS34725 found ... check your connections");
     while (1);
@@ -37,16 +38,20 @@ void offSensor()
 
 char colourValue()
 {
-  
+  PORTD |= (1<<7);
   setupSensor();
+ 
+  delayms(5);
   int16_t r, g, b, c, sum, lux;
   int16_t RGB_arr[2] = {0,0};
     tcs.getRawData(&r, &g, &b, &c);
-    RGB_arr[0] += r;
-    RGB_arr[1] += g;
+    RGB_arr[0] =  r;
+    RGB_arr[1] =  g;
+    PORTD &= ~(1<<7);
   offSensor();
+  delayms(1000);
 
- if( (RGB_arr[0] - RGB_arr[1]) < 30 && (RGB_arr[0] - RGB_arr[1]) > -30 )
+ if( (RGB_arr[0] - RGB_arr[1]) < 50 && (RGB_arr[0] - RGB_arr[1]) > -50 )
  {
   return 'N';
  }
