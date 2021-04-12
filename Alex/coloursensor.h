@@ -5,5 +5,6 @@
 void setupSensor();
 void offSensor();
 char colourValue();
+int lightBar();
 
 #endif

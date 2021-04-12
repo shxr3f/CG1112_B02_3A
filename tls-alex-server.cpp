@@ -230,45 +230,71 @@ void handleCommand(void *conn, const char *buffer)
 	{
 		case 'f':
 		case 'F':
+			getParams(&commandPacket);
 			commandPacket.command = COMMAND_FORWARD;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
 			break;
 
 		case 'b':
 		case 'B':
+			getParams(&commandPacket);
 			commandPacket.command = COMMAND_REVERSE;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
 			break;
 
 		case 'l':
 		case 'L':
+			getParams(&commandPacket);
 			commandPacket.command = COMMAND_TURN_LEFT;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
 			break;
 
 		case 'r':
 		case 'R':
+			getParams(&commandPacket);
 			commandPacket.command = COMMAND_TURN_RIGHT;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
 			break;
 
 		case 's':
 		case 'S':
 			commandPacket.command = COMMAND_STOP;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
 			break;
 
 		case 'c':
 		case 'C':
 			commandPacket.command = COMMAND_CLEAR_STATS;
 			commandPacket.params[0] = 0;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
 			break;
 
 		case 'g':
 		case 'G':
 			commandPacket.command = COMMAND_GET_STATS;
-			uartSendPacket(&commandPacket);
+			sendPacket(&commandPacket);
+			break;
+
+    case 'C':
+    case 'c':
+			commandPacket.command = COMMAND_COLOUR;
+			sendPacket(&commandPacket);
+			break;
+
+		case 'l':
+		case 'L':
+			commandPacket.command = COMMAND_LIGHT_BAR;
+			sendPacket(&commandPacket);
+			break
+
+		case 'p':
+		case 'P':
+			commandPacket.command = COMMAND_CALIBRATE;
+			sendPacket(&commandPacket);
+
+		case 'q':
+		case 'Q':
+			exitFlag=1;
 			break;
 
 		default:
@@ -291,7 +317,7 @@ void handleNetworkData(void *conn, const char *buffer, int len)
 	if(buffer[0] == NET_COMMAND_PACKET)
     {
 		handleCommand(conn, buffer);
-     }
+    }
 }
 
 void *worker(void *conn)

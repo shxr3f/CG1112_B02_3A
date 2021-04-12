@@ -17,9 +17,9 @@ float AlexDiagonal = 0.0;
 float AlexCirc = 0.0;
 
 volatile TDirection dir = STOP;
-
-volatile bool sideDone = false;
 volatile bool movementDone = false;
+volatile bool mvtTimeout = false;
+unsigned long timeout;
 
 // Store the ticks from Alex's left and
 // right encoders.
@@ -45,13 +45,14 @@ volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
 
 unsigned long deltaTicks;
-unsigned long targetTicks;
+unsigned long targetLTicks;
+unsigned long targetRTicks;
 
 unsigned long startTime;
-unsigned long endTime;
-unsigned long  caliTime;
+unsigned long caliLeft;
+unsigned long caliRight;
 double adjLeft  = 1;
-double adjRight = 0.8;
+double adjRight = 1;
 
 
 
@@ -64,46 +65,6 @@ double adjRight = 0.8;
  // Stop motors and turn off timers
 
 
-void calibrateMotors()
-{
-  //time taken for 1 tick
-  startTimer();
-  sideDone = false;
-  movementDone = false;
-  calibrateLeft = true;
-  caliTime = (1000 * CAL_AVGTICKS * CALSPEED) / (COUNTS_PER_REV * 60);
-  //Calibration for left motor
-  deltaTicks = (COUNTS_PER_REV * CAL_ROUNDS);
-  targetTicks = leftForwardTicksTurns + deltaTicks;
-  dir = CALIBRATE;
-  OCR0A = CAL_COUNT;
-  OCR0B = 0;
-  OCR1A = 255;
-  OCR1B = 255;
-  startTime = _timerTicks;
-  startMotors();
-  while (!movementDone) {}
-  stop();
-  //calibration for right motor
-  calibrateLeft = false;
-  calibrateRight = true;
-  sideDone = false;
-  movementDone = false;
-  targetTicks = rightForwardTicksTurns + deltaTicks;
-  OCR0A = 255;
-  OCR0B = 255;
-  OCR1A = CAL_COUNT;
-  OCR1B = 0;
-  startTime = _timerTicks;
-  dir = CALIBRATE;
-  startMotors();
-  while (!movementDone) {}
-  startTime = _timerTicks;
-  while (_timerTicks - startTime < STOPDELAY) {}
-  dir = STOP;
-  stopTimer();
-  stop();
-}
 
 
 // Set up Alex's motors. Right now this is empty, but
@@ -143,158 +104,58 @@ void leftISR()
   {
     case FORWARD:
       leftForwardTicks++;
-      if (leftForwardTicks == targetTicks)
+      if (leftForwardTicks >= targetLTicks)
       {        
         OCR0A = 255;
         OCR0B = 255;
         TCCR0A |= COMPAB;
-        if (sideDone)
-        {
-          forwardDist = leftForwardTicks * (WHEEL_CIRC);
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftForwardTicks >= targetTicks) && (rightForwardTicks >= targetTicks) )
-        {
-          OCR0A = 255;
-          OCR0B = 255;
-          TCCR0A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
     case BACKWARD:
       leftReverseTicks++; 
-      if (leftReverseTicks == targetTicks)
+      if (leftReverseTicks >= targetLTicks)
       {
         OCR0A = 255;
         OCR0B = 255;
         TCCR0A |= COMPAB;
-        if (sideDone)
-        {
-          reverseDist = leftReverseTicks * (WHEEL_CIRC);
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftReverseTicks >= targetTicks) && (rightReverseTicks >= targetTicks) )
-        {
-          OCR0A = 255;
-          OCR0B = 255;
-          TCCR0A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
     case LEFT:
       leftReverseTicksTurns++; 
-      if (leftReverseTicksTurns == targetTicks)
+      if (leftReverseTicksTurns >= targetRTicks)
       {
         OCR0A = 255;
         OCR0B = 255;
         TCCR0A |= COMPAB;
-        if (sideDone)
-        {
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftReverseTicksTurns >= targetTicks) && (rightForwardTicksTurns >= targetTicks) )
-        {
-          OCR0A = 255;
-          OCR0B = 255;
-          TCCR0A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
     case RIGHT:
       leftForwardTicksTurns++; 
-      if (leftForwardTicksTurns == targetTicks)
+      if (leftForwardTicksTurns >= targetLTicks)
       {
         OCR0A = 255;
         OCR0B = 255;
         TCCR0A |= COMPAB;
-        if (sideDone)
-        {
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftForwardTicksTurns >= targetTicks) && (rightReverseTicksTurns >= targetTicks) )
-        {
-          OCR0A = 255;
-          OCR0B = 255;
-          TCCR0A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
       case CALIBRATE:
-        if (!sideDone && calibrateLeft)
+        if (calibrateLeft)
         {
           leftForwardTicksTurns++;
-//          Serial.println(leftForwardTicksTurns);
-          if (leftForwardTicksTurns >= targetTicks)
+          if (leftForwardTicksTurns >= targetLTicks)
           {
-            sideDone = true;
-            adjLeft = (double)OCR0A / 200;
-            OCR0B = OCR0A;
-            OCR0A = 0;
-            targetTicks = leftReverseTicksTurns + deltaTicks;
-          }
-          else if (leftForwardTicksTurns % CAL_AVGTICKS == 0)
-          {
-            if (_timerTicks - startTime < caliTime)
-            {
-              if (OCR0A > MINTORQUE)
-              OCR0A--;
-            }
-            else if (_timerTicks - startTime > caliTime)
-            {
-              if (OCR0A <= 255)
-              {
-                OCR0A++;
-              }
-            }
-            startTime = _timerTicks;
+            caliLeft = _timerTicks;
+            OCR0A   = 255;
+            OCR0B   = 255;
+            TCCR0A |= COMPAB;
+            calibrateLeft = false;
           }
         }
-        else
-        {
-          leftReverseTicksTurns++;
-          if (leftReverseTicksTurns >= targetTicks)
-          {
-            OCR0A = 255;
-            OCR0B = 255;
-            movementDone = true;
-          }
-        }
+        break;
 
     //todo: calibration code
   }
@@ -307,161 +168,58 @@ void rightISR()
   {
     case FORWARD:
       rightForwardTicks++;
-      
-      if (rightForwardTicks == targetTicks)
+      if (rightForwardTicks >= targetRTicks)
       {        
         OCR1A = 255;
         OCR1B = 255;
         TCCR1A |= COMPAB;
-        if (sideDone)
-        {
-          forwardDist = rightForwardTicks * (WHEEL_CIRC);
-         movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftForwardTicks >= targetTicks) && (rightForwardTicks >= targetTicks) )
-        {
-          OCR1A = 255;
-          OCR1B = 255;
-          TCCR1A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
     case BACKWARD:
       rightReverseTicks++; 
-      if (rightReverseTicks == targetTicks)
+      if (rightReverseTicks >= targetRTicks)
       {
         OCR1A = 255;
         OCR1B = 255;
         TCCR1A |= COMPAB;
-        if (sideDone)
-        {
-          reverseDist = rightReverseTicks * (WHEEL_CIRC);
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftReverseTicks >= targetTicks) && (rightReverseTicks >= targetTicks) )
-        {
-          OCR1A = 255;
-          OCR1B = 255;
-          TCCR1A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
     case LEFT:
       rightForwardTicksTurns++; 
-      if (rightForwardTicksTurns == targetTicks)
+      if (rightForwardTicksTurns >= targetRTicks)
       {
         OCR1A = 255;
         OCR1B = 255;
         TCCR1A |= COMPAB;
-        if (sideDone)
-        {
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftReverseTicksTurns >= targetTicks) && (rightForwardTicksTurns >= targetTicks) )
-        {
-          OCR1A = 255;
-          OCR1B = 255;
-          TCCR1A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
     case RIGHT:
       rightReverseTicksTurns++; 
-      if (rightReverseTicksTurns == targetTicks)
+      if (rightReverseTicksTurns >= targetRTicks)
       {
         OCR1A = 255;
         OCR1B = 255;
         TCCR1A |= COMPAB;
-        if (sideDone)
-        {
-          movementDone = true;
-        }
-        else
-        {
-          sideDone = true;
-        }
-      }
-      else
-      {
-        if ((leftForwardTicksTurns >= targetTicks) && (rightReverseTicksTurns >= targetTicks) )
-        {
-          OCR1A = 255;
-          OCR1B = 255;
-          TCCR1A |= COMPAB;
-          movementDone = true;
-        }
       }
       break;
 
       case CALIBRATE:
-        if (!sideDone && calibrateRight)
+        if (calibrateRight)
         {
           rightForwardTicksTurns++;
-          if (rightForwardTicksTurns >= targetTicks)
+          if (rightForwardTicksTurns >= targetRTicks)
           {
-            sideDone = true;
-            adjRight = (double)OCR1A / 200;
-            OCR1B = OCR1A;
-            OCR1A = 0;
-            targetTicks = rightReverseTicksTurns + deltaTicks;
-          }
-          else if (rightForwardTicksTurns % CAL_AVGTICKS == 0)
-          {
-            if (_timerTicks - startTime < caliTime)
-            {
-              if (OCR1A > MINTORQUE)
-              OCR1A--;
-            }
-            else if (_timerTicks - startTime > caliTime)
-            {
-              if (OCR1A <= 255)
-              {
-                OCR1A++;
-              }
-            }
-            startTime = _timerTicks;
+            caliRight = _timerTicks;
+            OCR1A   = 255;
+            OCR1B   = 255;
+            TCCR1A |= COMPAB;
+            calibrateRight = false;
           }
         }
-        else
-        {
-          rightReverseTicksTurns++;
-          if (rightReverseTicksTurns >= targetTicks)
-          {
-            OCR1A = 255;
-            OCR1B = 255;
-            calibrateRight =  false;
-            movementDone = true;
-          }
-        }
-
-    //todo: calibration code
+        break;
   }
 }
 
@@ -509,8 +267,8 @@ void startMotors()
       break; 
 
     case CALIBRATE:
-      TCCR0A  |= 0b10100001;
-      TCCR1A  |= 0b10100001;
+      TCCR0A  |= COMPA;
+      TCCR1A  |= COMPA;
       break;
   }
 }
@@ -536,24 +294,35 @@ void forward(float dist, float speed)
 {
   dir = FORWARD;
   movementDone = false;
-  sideDone = false;
   int val = pwmVal(speed);
-  if (dist >0 )
+  if (dist > 0 )
   {
     deltaTicks = ((double)dist * COUNTS_PER_REV / WHEEL_CIRC);
   }
   else
   {
-    deltaTicks = 9999999;
+    deltaTicks = (DEFDIST * COUNTS_PER_REV / WHEEL_CIRC);
   }
-  targetTicks = leftForwardTicks + deltaTicks;
+  targetLTicks = leftForwardTicks + deltaTicks;
+  targetRTicks = rightForwardTicks + deltaTicks;
   OCR0A = val * adjLeft;
   OCR1A = val * adjRight;
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {}
-  delay(50);
+  while (!movementDone) {
+        if ((leftForwardTicks >= targetLTicks) && (rightForwardTicks >= targetLTicks) )
+        {
+          OCR0A = 255;
+          OCR0B = 255;
+          OCR1A = 255;
+          OCR1B = 255;
+          TCCR0A |= COMPAB;
+          TCCR1A |= COMPAB;
+          movementDone = true;
+        }
+  }
+  delayms(50);
   stop();
 }
 
@@ -567,7 +336,6 @@ void reverse(float dist, float speed)
 
   dir = BACKWARD;
   movementDone = false;
-  sideDone = false;
   int val = pwmVal(speed);
 
   if (dist >0 )
@@ -576,15 +344,27 @@ void reverse(float dist, float speed)
   }
   else
   {
-    deltaTicks = 9999999;
+    deltaTicks = (DEFDIST * COUNTS_PER_REV / WHEEL_CIRC);
   }
-  targetTicks = leftReverseTicks + deltaTicks;
+  targetLTicks = leftReverseTicks + deltaTicks;
+  targetRTicks = rightReverseTicks + deltaTicks;
   OCR0A = val * adjLeft;
   OCR1A = val * adjRight;
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {}
+  while (!movementDone) {
+    if ((leftReverseTicks >= targetLTicks) && (rightReverseTicks >= targetRTicks) )
+    {
+      OCR0A = 255;
+      OCR0B = 255;
+      OCR1A = 255;
+      OCR1B = 255;
+      TCCR0A |= COMPAB;
+      TCCR1A |= COMPAB;
+      movementDone = true;
+    }
+  }
   
   delay(50);
   stop();
@@ -606,7 +386,6 @@ void left(float ang, float speed)
 {
   dir = LEFT;
   movementDone = false;
-  sideDone = false;
   int val = pwmVal(speed);
   
   if (ang > 0)
@@ -615,9 +394,10 @@ void left(float ang, float speed)
   }
   else
   {
-    deltaTicks = 9999999;
+    deltaTicks = computeDeltaTicks(DEFANGLE);
   }
-  targetTicks = leftReverseTicksTurns + deltaTicks;
+  targetLTicks = leftReverseTicksTurns + deltaTicks;
+  targetRTicks = rightForwardTicksTurns + deltaTicks;
 
   //TODO: add ticks calculation
   OCR0A = val * adjLeft;
@@ -625,8 +405,19 @@ void left(float ang, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {}
-  delay(50);
+  while (!movementDone) {        
+    if ((leftReverseTicksTurns >= targetLTicks) && (rightForwardTicksTurns >= targetRTicks) )
+        {
+          OCR0A = 255;
+          OCR0B = 255;
+          OCR1A = 255;
+          OCR1B = 255;
+          TCCR0A |= COMPAB;
+          TCCR1A |= COMPAB;
+          movementDone = true;
+        }
+    }
+  delayms(50);
   stop();
 }
 
@@ -639,7 +430,6 @@ void right(float ang, float speed)
 {
   dir = RIGHT;
   movementDone = false;
-  sideDone = false;
   int val = pwmVal(speed);
   
   if (ang > 0)
@@ -648,19 +438,28 @@ void right(float ang, float speed)
   }
   else
   {
-    deltaTicks = 9999999;
+    deltaTicks = computeDeltaTicks(DEFANGLE);
   }
-  targetTicks = rightReverseTicksTurns + deltaTicks;
-  
+  targetRTicks = rightReverseTicksTurns + deltaTicks;
+  targetLTicks = leftForwardTicksTurns + deltaTicks;
   OCR0A = val * adjLeft;
   OCR1A = val * adjRight;
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {}
-  
-  delay(50);
-
+  while (!movementDone) {
+        if ((leftForwardTicksTurns >= targetLTicks) && (rightReverseTicksTurns >= targetRTicks) )
+        {
+          OCR0A = 255;
+          OCR0B = 255;
+          OCR1A = 255;
+          OCR1B = 255;
+          TCCR0A |= COMPAB;
+          TCCR1A |= COMPAB;
+          movementDone = true;
+        }
+  }
+  delayms(50);
   stop();
 }
 
@@ -677,4 +476,53 @@ void stop()
   TCCR0A &= ~COMPB;
   TCCR1A &= ~COMPA;
   TCCR1A &= ~COMPB;
+}
+
+void calibrateMotors()
+{
+  //time taken for 1 tick
+  startTimer();
+  movementDone = false;
+  calibrateLeft = true;
+  calibrateRight = true;
+  deltaTicks = (COUNTS_PER_REV * CAL_ROUNDS);
+  targetLTicks = leftForwardTicksTurns + deltaTicks;
+  targetRTicks = rightForwardTicksTurns + deltaTicks;
+  dir = CALIBRATE;
+  int val = pwmVal(CALSPEED);
+  OCR0A = val;
+  OCR0B = 0;
+  OCR1A = val;
+  OCR1B = 0;
+  startTime = _timerTicks;
+  startMotors();
+  while (!movementDone) {        
+    if ((leftForwardTicksTurns >= targetLTicks) && (rightReverseTicksTurns >= targetRTicks) )
+        {
+          OCR0A = 255;
+          OCR0B = 255;
+          OCR1A = 255;
+          OCR1B = 255;
+          TCCR0A |= COMPAB;
+          TCCR1A |= COMPAB;
+          movementDone = true;
+        }
+  }
+  if (caliLeft > caliRight)
+  {
+    adjLeft = caliRight/caliLeft;
+  }
+  else
+  {
+    adjRight = caliLeft/caliRight;
+  }
+  delayms(50);
+  stop();
+  stopTimer();
+}
+
+unsigned long setTimeout(unsigned long targetTicks)
+{
+  timeout = _timerTicks + (targetTicks * APPROX_SPEED * WHEEL_CIRC * TIMER_SCALE / COUNTS_PER_REV);
+  mvtTimeout = false;
 }

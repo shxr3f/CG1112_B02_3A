@@ -47,10 +47,22 @@
 //Number of ticks to calibrate around
 #define CAL_AVGTICKS  10
 
+
+//Distance to move if 0 was accidentally input as distance
+#define DEFDIST 10
+//Angle to turn if no angle was given
+#define DEFANGLE 30
+
+//Approximate max speed for timeout counter
+#define APPROX_SPEED 1
+
 #define MINTORQUE 140
 
 //Time to wait in between ADC readings for the colour sensor
 #define ADCDELAY 100
+
+//1s = how many ticks of the delay timer
+#define TIMER_SCALE 200
 
 
 

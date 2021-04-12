@@ -65,7 +65,11 @@ char colourValue()
  }
 }
 
-
+int lightBar()
+{
+  PORTD ^= (1 << 7);
+  return ((PORTD >> 7) & 1);
+}
 
 /*
 int startADC()

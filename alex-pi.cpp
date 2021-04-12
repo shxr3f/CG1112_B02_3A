@@ -227,9 +227,21 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
-        case 'C':
-        case 'c':
+    case 'C':
+    case 'c':
 			commandPacket.command = COMMAND_COLOUR;
+			sendPacket(&commandPacket);
+			break;
+
+		case 'l':
+		case 'L':
+			commandPacket.command = COMMAND_LIGHT_BAR;
+			sendPacket(&commandPacket);
+			break
+
+		case 'p':
+		case 'P':
+			commandPacket.command = COMMAND_CALIBRATE;
 			sendPacket(&commandPacket);
 
 		case 'q':

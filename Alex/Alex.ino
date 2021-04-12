@@ -39,7 +39,15 @@ ISR(TIMER1_COMPB_vect)
 ISR(TIMER2_COMPA_vect)
 { 
   _timerTicks++;
-  TCNT2 = 0;
+  //movement time out 
+
+  if (dir != STOP)
+  {
+    if (_timerTicks > timeout)
+    {
+      mvtTimeout = true;
+    }
+  }
 }
 
 ISR(INT0_vect)
@@ -55,7 +63,6 @@ ISR(INT1_vect)
 
 void WDT_off(void)
 {
-
   //Clear WDRF in MCUSR
   MCUSR  &= ~(1<<WDRF);
   //Write 1 to WDCE and WDE
@@ -327,27 +334,33 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 {
+  char colour;
+  int returnMsg;
   switch(command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
     case COMMAND_FORWARD:
       sendOK();
       forward((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_TURN_LEFT:
       sendOK();
       left((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_TURN_RIGHT:
       sendOK();
       right((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_REVERSE:
       sendOK();
       reverse((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_STOP:
@@ -367,9 +380,27 @@ void handleCommand(TPacket *command)
     
     case COMMAND_COLOUR_SENSOR:
       sendOK();
-      char colour = colourValue();
+      colour = colourValue();
       sendMessage(&colour);
       break;
+
+    case COMMAND_LIGHT_BAR:
+      sendOK();
+      returnMsg = lightBar();
+      if (returnMsg == 1)
+      {
+        sendMessage("light bar ON");
+      }
+      else
+      {
+        sendMessage("light bar OFF");
+      }
+      break;
+
+    case COMMAND_CALIBRATE:
+      sendOK();
+      calibrateMotors();
+      sendMessage("Calibration done");
 
         
     default:
@@ -429,8 +460,8 @@ void setup() {
   stop();
   enablePullups();
   initializeState();
-//  WDT_off();
-//  setupPowerSaving();
+  WDT_off();
+  setupPowerSaving();
   sei();
 //  calibrateMotors();
 }
@@ -458,7 +489,7 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-  colourValue();
+  startTimer();
   /*
  // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
