@@ -233,10 +233,12 @@ void rightISR()
 // blank.
 void startMotors()
 {
-  PRR    &= ~(PRR_TIMER0_MASK);
-  PRR    &= ~(PRR_TIMER1_MASK);
-  TCCR0B |= 0b00000011;
-  TCCR1B |= 0b00000011;
+  startTime = _timerTicks;
+  startTimer();
+  PRR     &= ~(PRR_TIMER0_MASK);
+  PRR     &= ~(PRR_TIMER1_MASK);
+  TCCR0B  |= 0b00000011;
+  TCCR1B  |= 0b00000011;
   TCCR0A  |= 0b00000001;
   TCCR1A  |= 0b00000001;
   switch(dir)
@@ -303,6 +305,7 @@ void forward(float dist, float speed)
   {
     deltaTicks = (DEFDIST * COUNTS_PER_REV / WHEEL_CIRC);
   }
+  setTimeout(deltaTicks);
   targetLTicks = leftForwardTicks + deltaTicks;
   targetRTicks = rightForwardTicks + deltaTicks;
   OCR0A = val * adjLeft;
@@ -310,7 +313,7 @@ void forward(float dist, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {
+  while (!movementDone && !mvtTimeout) {
         if ((leftForwardTicks >= targetLTicks) && (rightForwardTicks >= targetLTicks) )
         {
           OCR0A = 255;
@@ -322,7 +325,7 @@ void forward(float dist, float speed)
           movementDone = true;
         }
   }
-  delayms(50);
+  delayms(STOPDELAY);
   stop();
 }
 
@@ -346,6 +349,7 @@ void reverse(float dist, float speed)
   {
     deltaTicks = (DEFDIST * COUNTS_PER_REV / WHEEL_CIRC);
   }
+  setTimeout(deltaTicks);
   targetLTicks = leftReverseTicks + deltaTicks;
   targetRTicks = rightReverseTicks + deltaTicks;
   OCR0A = val * adjLeft;
@@ -353,7 +357,7 @@ void reverse(float dist, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {
+  while (!movementDone && !mvtTimeout) {
     if ((leftReverseTicks >= targetLTicks) && (rightReverseTicks >= targetRTicks) )
     {
       OCR0A = 255;
@@ -366,7 +370,7 @@ void reverse(float dist, float speed)
     }
   }
   
-  delay(50);
+  delay(STOPDELAY);
   stop();
 }
 
@@ -398,14 +402,14 @@ void left(float ang, float speed)
   }
   targetLTicks = leftReverseTicksTurns + deltaTicks;
   targetRTicks = rightForwardTicksTurns + deltaTicks;
-
+  setTimeout(deltaTicks);
   //TODO: add ticks calculation
   OCR0A = val * adjLeft;
   OCR1A = val * adjRight;
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {        
+  while (!movementDone && !mvtTimeout) {        
     if ((leftReverseTicksTurns >= targetLTicks) && (rightForwardTicksTurns >= targetRTicks) )
         {
           OCR0A = 255;
@@ -417,7 +421,7 @@ void left(float ang, float speed)
           movementDone = true;
         }
     }
-  delayms(50);
+  delayms(STOPDELAY);
   stop();
 }
 
@@ -440,6 +444,7 @@ void right(float ang, float speed)
   {
     deltaTicks = computeDeltaTicks(DEFANGLE);
   }
+  setTimeout(deltaTicks);
   targetRTicks = rightReverseTicksTurns + deltaTicks;
   targetLTicks = leftForwardTicksTurns + deltaTicks;
   OCR0A = val * adjLeft;
@@ -447,7 +452,7 @@ void right(float ang, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-  while (!movementDone) {
+  while (!movementDone && !mvtTimeout) {
         if ((leftForwardTicksTurns >= targetLTicks) && (rightReverseTicksTurns >= targetRTicks) )
         {
           OCR0A = 255;
@@ -459,13 +464,14 @@ void right(float ang, float speed)
           movementDone = true;
         }
   }
-  delayms(50);
+  delayms(STOPDELAY);
   stop();
 }
 
 
 void stop()
 {
+  stopTimer();
   dir = STOP;
   TCNT0 = 0;
   TCNT1 = 0;
@@ -481,11 +487,11 @@ void stop()
 void calibrateMotors()
 {
   //time taken for 1 tick
-  startTimer();
-  movementDone = false;
   calibrateLeft = true;
   calibrateRight = true;
-  deltaTicks = (COUNTS_PER_REV * CAL_ROUNDS);
+  deltaTicks = (unsigned long)(COUNTS_PER_REV * CAL_DIST) / WHEEL_CIRC;
+  startTime = _timerTicks;
+  setTimeout(deltaTicks * 2);
   targetLTicks = leftForwardTicksTurns + deltaTicks;
   targetRTicks = rightForwardTicksTurns + deltaTicks;
   dir = CALIBRATE;
@@ -494,35 +500,32 @@ void calibrateMotors()
   OCR0B = 0;
   OCR1A = val;
   OCR1B = 0;
-  startTime = _timerTicks;
   startMotors();
-  while (!movementDone) {        
-    if ((leftForwardTicksTurns >= targetLTicks) && (rightReverseTicksTurns >= targetRTicks) )
-        {
-          OCR0A = 255;
-          OCR0B = 255;
-          OCR1A = 255;
-          OCR1B = 255;
-          TCCR0A |= COMPAB;
-          TCCR1A |= COMPAB;
-          movementDone = true;
-        }
-  }
-  if (caliLeft > caliRight)
+  while ( (calibrateLeft || calibrateRight) && !mvtTimeout) 
+  {}
+  OCR0A = 255;
+  OCR0B = 255;
+  OCR1A = 255;
+  OCR1B = 255;
+  TCCR0A |= COMPAB;
+  TCCR1A |= COMPAB;
+  if (!mvtTimeout)
   {
-    adjLeft = caliRight/caliLeft;
+    if (caliLeft > caliRight)
+    {
+      adjLeft = ((float)startTime - caliRight)/ (startTime - caliLeft);
+    }
+    else
+    {
+      adjRight = ((float)startTime - caliLeft)/ (startTime - caliRight);
+    }
   }
-  else
-  {
-    adjRight = caliLeft/caliRight;
-  }
-  delayms(50);
+  delayms(STOPDELAY);
   stop();
-  stopTimer();
 }
 
 unsigned long setTimeout(unsigned long targetTicks)
 {
-  timeout = _timerTicks + (targetTicks * APPROX_SPEED * WHEEL_CIRC * TIMER_SCALE / COUNTS_PER_REV);
+  timeout = _timerTicks + (((targetTicks * WHEEL_CIRC) / (COUNTS_PER_REV * APPROX_SPEED)) * FAILSAFE_MULT * TIMER_SCALE);
   mvtTimeout = false;
 }

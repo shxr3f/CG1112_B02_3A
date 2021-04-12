@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
+#include "parameters.h"
 #include <math.h>
 /*
 
@@ -40,16 +41,14 @@ char colourValue()
 {
   PORTD |= (1<<7);
   setupSensor();
- 
-  delayms(5);
+  delayms(ADCDELAY);
   int16_t r, g, b, c, sum, lux;
   int16_t RGB_arr[2] = {0,0};
-    tcs.getRawData(&r, &g, &b, &c);
-    RGB_arr[0] =  r;
-    RGB_arr[1] =  g;
-    PORTD &= ~(1<<7);
+  tcs.getRawData(&r, &g, &b, &c);
+  RGB_arr[0] =  r;
+  RGB_arr[1] =  g;
+  PORTD &= ~(1<<7);
   offSensor();
-  delayms(1000);
 
  if( (RGB_arr[0] - RGB_arr[1]) < 50 && (RGB_arr[0] - RGB_arr[1]) > -50 )
  {

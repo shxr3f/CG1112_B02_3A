@@ -279,7 +279,7 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, c = colour sensor, q=exit)\n");
+		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, h = colour sensor, l = turn lights on, p = calibrate q=exit)\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
