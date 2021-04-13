@@ -39,18 +39,8 @@ void stopTimer()
 void delayms(unsigned long i)
 {
   startTimer();
-<<<<<<< HEAD
-  long endTime = _timerTicks + (i*100);
-  
-//  Serial.println("Hello");
-  while( _timerTicks <= endTime )
-  {
-    }
-  
-=======
   long endTime = _timerTicks + (i * TIMER_SCALE/1000);
   while(_timerTicks <= endTime) {}
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stopTimer();
   
 }

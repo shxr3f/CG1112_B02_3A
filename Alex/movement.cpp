@@ -231,20 +231,12 @@ void rightISR()
 // blank.
 void startMotors()
 {
-<<<<<<< HEAD
-  startTimer();
-  PRR    &= ~(PRR_TIMER0_MASK);
-  PRR    &= ~(PRR_TIMER1_MASK);
-  TCCR0B |= 0b00000011;
-  TCCR1B |= 0b00000011;
-=======
   startTime = _timerTicks;
   startTimer();
   PRR     &= ~(PRR_TIMER0_MASK);
   PRR     &= ~(PRR_TIMER1_MASK);
   TCCR0B  |= 0b00000011;
   TCCR1B  |= 0b00000011;
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   TCCR0A  |= 0b00000001;
   TCCR1A  |= 0b00000001;
   switch(dir)
@@ -319,10 +311,6 @@ void forward(float dist, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-<<<<<<< HEAD
-  while (!movementDone) {}
-  delayms(50);
-=======
   while (!movementDone && !mvtTimeout) {
         if ((leftForwardTicks >= targetLTicks) && (rightForwardTicks >= targetLTicks) )
         {
@@ -336,7 +324,6 @@ void forward(float dist, float speed)
         }
   }
   delayms(STOPDELAY);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
@@ -381,11 +368,7 @@ void reverse(float dist, float speed)
     }
   }
   
-<<<<<<< HEAD
-  delayms(50);
-=======
   delay(STOPDELAY);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
@@ -424,10 +407,6 @@ void left(float ang, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-<<<<<<< HEAD
-  while (!movementDone) {}
-  delayms(50);
-=======
   while (!movementDone && !mvtTimeout) {        
     if ((leftReverseTicksTurns >= targetLTicks) && (rightForwardTicksTurns >= targetRTicks) )
         {
@@ -441,7 +420,6 @@ void left(float ang, float speed)
         }
     }
   delayms(STOPDELAY);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
@@ -472,12 +450,6 @@ void right(float ang, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
-<<<<<<< HEAD
-  while (!movementDone) {}
-  
-  delayms(50);
-
-=======
   while (!movementDone && !mvtTimeout) {
         if ((leftForwardTicksTurns >= targetLTicks) && (rightReverseTicksTurns >= targetRTicks) )
         {
@@ -491,7 +463,6 @@ void right(float ang, float speed)
         }
   }
   delayms(STOPDELAY);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
