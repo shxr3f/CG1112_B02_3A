@@ -277,7 +277,7 @@ void handleCommand(void *conn, const char *buffer)
 
     case 'h':
     case 'H':
-			commandPacket.command = COMMAND_COLOUR;
+			commandPacket.command = COMMAND_COLOUR_SENSOR;
 			sendPacket(&commandPacket);
 			break;
 

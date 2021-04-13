@@ -227,13 +227,6 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
-<<<<<<< HEAD
-        case 'H':
-        case 'h':
-			commandPacket.command = COMMAND_COLOUR_SENSOR;
-			sendPacket(&commandPacket);
-            break;
-=======
     case 'C':
     case 'c':
 			commandPacket.command = COMMAND_COLOUR;
@@ -250,7 +243,6 @@ void sendCommand(char command)
 		case 'P':
 			commandPacket.command = COMMAND_CALIBRATE;
 			sendPacket(&commandPacket);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
 
 		case 'q':
 		case 'Q':

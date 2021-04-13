@@ -42,11 +42,7 @@ char colourValue()
 {
   PORTD |= (1<<7);
   setupSensor();
-<<<<<<< HEAD
-  delayms(100);
-=======
   delayms(ADCDELAY);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   int16_t r, g, b, c, sum, lux;
   int16_t RGB_arr[2] = {0,0};
   tcs.getRawData(&r, &g, &b, &c);
@@ -54,11 +50,6 @@ char colourValue()
   RGB_arr[1] =  g;
   PORTD &= ~(1<<7);
   offSensor();
-<<<<<<< HEAD
-//  Serial.println(RGB_arr[0]);
-//  Serial.println(RGB_arr[1]);
-=======
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
 
  if( (RGB_arr[0] - RGB_arr[1]) < 10 && (RGB_arr[0] - RGB_arr[1]) > -10 )
  {

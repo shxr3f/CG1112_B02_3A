@@ -36,8 +36,6 @@ ISR(TIMER1_COMPB_vect)
 { 
 }
 
-<<<<<<< HEAD
-=======
 ISR(TIMER2_COMPA_vect)
 { 
   _timerTicks++;
@@ -51,7 +49,6 @@ ISR(TIMER2_COMPA_vect)
     }
   }
 }
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
 
 ISR(INT0_vect)
 {
@@ -337,12 +334,8 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 {
-<<<<<<< HEAD
-  char col;
-=======
   char colour;
   int returnMsg;
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   switch(command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
@@ -387,13 +380,8 @@ void handleCommand(TPacket *command)
     
     case COMMAND_COLOUR_SENSOR:
       sendOK();
-<<<<<<< HEAD
-      col = colourValue();
-      sendMessage(&col);
-=======
       colour = colourValue();
       sendMessage(&colour);
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
       break;
 
     case COMMAND_LIGHT_BAR:
@@ -472,15 +460,9 @@ void setup() {
   stop();
   enablePullups();
   initializeState();
-<<<<<<< HEAD
- // WDT_off();
- // setupPowerSaving();
-=======
   WDT_off();
   setupPowerSaving();
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   sei();
-//  calibrateMotors();
 }
 
 void handlePacket(TPacket *packet)
@@ -506,11 +488,7 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-<<<<<<< HEAD
-=======
-  startTimer();
-  /*
->>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
+
  // put your main code here, to run repeatedly:
 
   TPacket recvPacket; // This holds commands from the Pi
