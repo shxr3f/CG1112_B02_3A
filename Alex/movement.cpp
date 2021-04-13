@@ -10,8 +10,6 @@
 #include <avr/interrupt.h>
 #include <math.h>
 #include "delaytimer.h"
-#include <Arduino.h>
-
 
 float AlexDiagonal = 0.0;
 float AlexCirc = 0.0;
@@ -475,6 +473,7 @@ void rightISR()
 // blank.
 void startMotors()
 {
+  startTimer();
   PRR    &= ~(PRR_TIMER0_MASK);
   PRR    &= ~(PRR_TIMER1_MASK);
   TCCR0B |= 0b00000011;
@@ -553,7 +552,7 @@ void forward(float dist, float speed)
   OCR1B = val * adjRight;
   startMotors();
   while (!movementDone) {}
-  delay(50);
+  delayms(50);
   stop();
 }
 
@@ -586,7 +585,7 @@ void reverse(float dist, float speed)
   startMotors();
   while (!movementDone) {}
   
-  delay(50);
+  delayms(50);
   stop();
 }
 
@@ -626,7 +625,7 @@ void left(float ang, float speed)
   OCR1B = val * adjRight;
   startMotors();
   while (!movementDone) {}
-  delay(50);
+  delayms(50);
   stop();
 }
 
@@ -659,7 +658,7 @@ void right(float ang, float speed)
   startMotors();
   while (!movementDone) {}
   
-  delay(50);
+  delayms(50);
 
   stop();
 }
@@ -677,4 +676,5 @@ void stop()
   TCCR0A &= ~COMPB;
   TCCR1A &= ~COMPA;
   TCCR1A &= ~COMPB;
+  stopTimer();
 }

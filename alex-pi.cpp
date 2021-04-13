@@ -227,10 +227,11 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
-        case 'C':
-        case 'c':
-			commandPacket.command = COMMAND_COLOUR;
+        case 'H':
+        case 'h':
+			commandPacket.command = COMMAND_COLOUR_SENSOR;
 			sendPacket(&commandPacket);
+            break;
 
 		case 'q':
 		case 'Q':

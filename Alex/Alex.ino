@@ -1,4 +1,4 @@
-#include <math.h>
+  #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
 #include "packet.h"
@@ -36,11 +36,6 @@ ISR(TIMER1_COMPB_vect)
 { 
 }
 
-ISR(TIMER2_COMPA_vect)
-{ 
-  _timerTicks++;
-  TCNT2 = 0;
-}
 
 ISR(INT0_vect)
 {
@@ -327,6 +322,7 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 {
+  char col;
   switch(command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
@@ -367,8 +363,8 @@ void handleCommand(TPacket *command)
     
     case COMMAND_COLOUR_SENSOR:
       sendOK();
-      char colour = colourValue();
-      sendMessage(&colour);
+      col = colourValue();
+      sendMessage(&col);
       break;
 
         
@@ -429,8 +425,8 @@ void setup() {
   stop();
   enablePullups();
   initializeState();
-//  WDT_off();
-//  setupPowerSaving();
+ // WDT_off();
+ // setupPowerSaving();
   sei();
 //  calibrateMotors();
 }
@@ -458,9 +454,8 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-  colourValue();
-  /*
  // put your main code here, to run repeatedly:
+
   TPacket recvPacket; // This holds commands from the Pi
 
 
@@ -479,8 +474,7 @@ void loop() {
       if(result == PACKET_CHECKSUM_BAD)
       {
         sendBadChecksum();
-      }*/
-     
+      } 
  
   
 }

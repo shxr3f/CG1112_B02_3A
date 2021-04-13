@@ -3,10 +3,16 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "parameters.h"
-#include <Arduino.h>
 #include "delaytimer.h"
 
-volatile unsigned long _timerTicks = 0;
+volatile unsigned long _timerTicks;
+
+ISR(TIMER2_COMPA_vect)
+{ 
+  _timerTicks++;
+//  Serial.println(_timerTicks);
+  TCNT2 = 0;
+}
 
 void setupTimer()
 {
@@ -36,7 +42,9 @@ void delayms(unsigned long i)
   long endTime = _timerTicks + (i*100);
   
 //  Serial.println("Hello");
-  while(_timerTicks <= endTime) {}
+  while( _timerTicks <= endTime )
+  {
+    }
   
   stopTimer();
   
