@@ -15,9 +15,8 @@ extern float AlexDiagonal;
 extern float AlexCirc;
 
 extern volatile TDirection dir;
-
-extern volatile bool sideDone;
-extern volatile bool movementDone;
+extern volatile bool mvtTimeout;
+extern unsigned long timeout;
 
 // Store the ticks from Alex's left and
 // right encoders.
@@ -40,14 +39,8 @@ extern volatile unsigned long rightRevs;
 extern volatile unsigned long forwardDist;
 extern volatile unsigned long reverseDist;
 
-extern unsigned long deltaTicks;
-extern unsigned long targetTicks;
-
-extern unsigned long startTime;
-extern unsigned long endTime;
 
 
-void calibrateMotors();
 void setupMotors();
 void leftISR();
 void rightISR();
@@ -59,5 +52,7 @@ unsigned long computeDeltaTicks(float ang);
 void left(float ang, float speed);
 void right(float ang, float speed);
 void stop();
+void calibrateMotors();
+unsigned long setTimeout(unsigned long targetTicks);
 
 #endif

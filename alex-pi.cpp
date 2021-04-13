@@ -227,11 +227,30 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
+<<<<<<< HEAD
         case 'H':
         case 'h':
 			commandPacket.command = COMMAND_COLOUR_SENSOR;
 			sendPacket(&commandPacket);
             break;
+=======
+    case 'C':
+    case 'c':
+			commandPacket.command = COMMAND_COLOUR;
+			sendPacket(&commandPacket);
+			break;
+
+		case 'l':
+		case 'L':
+			commandPacket.command = COMMAND_LIGHT_BAR;
+			sendPacket(&commandPacket);
+			break
+
+		case 'p':
+		case 'P':
+			commandPacket.command = COMMAND_CALIBRATE;
+			sendPacket(&commandPacket);
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
 
 		case 'q':
 		case 'Q':
@@ -268,7 +287,7 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, c = colour sensor, q=exit)\n");
+		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, h = colour sensor, l = turn lights on, p = calibrate q=exit)\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream

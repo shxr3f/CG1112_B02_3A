@@ -42,6 +42,11 @@ typedef enum
   COMMAND_GET_STATS = 5,
   COMMAND_CLEAR_STATS = 6,
   COMMAND_COLOUR_SENSOR = 7,
+<<<<<<< HEAD
+=======
+  COMMAND_LIGHT_BAR = 8,
+  COMMAND_CALIBRATE = 9
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
 } TCommandType;
 #endif
 

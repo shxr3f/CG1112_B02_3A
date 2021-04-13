@@ -36,6 +36,22 @@ ISR(TIMER1_COMPB_vect)
 { 
 }
 
+<<<<<<< HEAD
+=======
+ISR(TIMER2_COMPA_vect)
+{ 
+  _timerTicks++;
+  //movement time out 
+
+  if (dir != STOP)
+  {
+    if (_timerTicks > timeout)
+    {
+      mvtTimeout = true;
+    }
+  }
+}
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
 
 ISR(INT0_vect)
 {
@@ -50,7 +66,6 @@ ISR(INT1_vect)
 
 void WDT_off(void)
 {
-
   //Clear WDRF in MCUSR
   MCUSR  &= ~(1<<WDRF);
   //Write 1 to WDCE and WDE
@@ -322,28 +337,37 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 {
+<<<<<<< HEAD
   char col;
+=======
+  char colour;
+  int returnMsg;
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   switch(command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
     case COMMAND_FORWARD:
       sendOK();
       forward((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_TURN_LEFT:
       sendOK();
       left((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_TURN_RIGHT:
       sendOK();
       right((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_REVERSE:
       sendOK();
       reverse((float) command->params[0], (float) command->params[1]);
+      sendMessage("MvtDone");
       break;
 
     case COMMAND_STOP:
@@ -363,9 +387,32 @@ void handleCommand(TPacket *command)
     
     case COMMAND_COLOUR_SENSOR:
       sendOK();
+<<<<<<< HEAD
       col = colourValue();
       sendMessage(&col);
+=======
+      colour = colourValue();
+      sendMessage(&colour);
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
       break;
+
+    case COMMAND_LIGHT_BAR:
+      sendOK();
+      returnMsg = lightBar();
+      if (returnMsg == 1)
+      {
+        sendMessage("light bar ON");
+      }
+      else
+      {
+        sendMessage("light bar OFF");
+      }
+      break;
+
+    case COMMAND_CALIBRATE:
+      sendOK();
+      calibrateMotors();
+      sendMessage("Calibration done");
 
         
     default:
@@ -425,8 +472,13 @@ void setup() {
   stop();
   enablePullups();
   initializeState();
+<<<<<<< HEAD
  // WDT_off();
  // setupPowerSaving();
+=======
+  WDT_off();
+  setupPowerSaving();
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   sei();
 //  calibrateMotors();
 }
@@ -454,6 +506,11 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
+<<<<<<< HEAD
+=======
+  startTimer();
+  /*
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
  // put your main code here, to run repeatedly:
 
   TPacket recvPacket; // This holds commands from the Pi
