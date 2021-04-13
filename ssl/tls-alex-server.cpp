@@ -230,77 +230,63 @@ void handleCommand(void *conn, const char *buffer)
 	{
 		case 'f':
 		case 'F':
-			getParams(&commandPacket);
 			commandPacket.command = COMMAND_FORWARD;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
 		case 'b':
 		case 'B':
-			getParams(&commandPacket);
 			commandPacket.command = COMMAND_REVERSE;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
 		case 'l':
 		case 'L':
-			getParams(&commandPacket);
 			commandPacket.command = COMMAND_TURN_LEFT;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
 		case 'r':
 		case 'R':
-			getParams(&commandPacket);
 			commandPacket.command = COMMAND_TURN_RIGHT;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
 		case 's':
 		case 'S':
 			commandPacket.command = COMMAND_STOP;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
 		case 'c':
 		case 'C':
 			commandPacket.command = COMMAND_CLEAR_STATS;
-			commandPacket.params[0] = 0;
-			sendPacket(&commandPacket);
+			commandPacket.params[1] = 0;
+			uartSendPacket(&commandPacket);
 			break;
 
 		case 'g':
 		case 'G':
 			commandPacket.command = COMMAND_GET_STATS;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
-    case 'h':
-    case 'H':
+        case 'h':
+        case 'H':
 			commandPacket.command = COMMAND_COLOUR_SENSOR;
-			sendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
 			break;
 
-		case 'l':
-		case 'L':
+		case 'o':
+		case 'O':
 			commandPacket.command = COMMAND_LIGHT_BAR;
-			sendPacket(&commandPacket);
-			break
+			uartSendPacket(&commandPacket);
+			break;
 
 		case 'p':
 		case 'P':
 			commandPacket.command = COMMAND_CALIBRATE;
-			sendPacket(&commandPacket);
-
-		case 'q':
-		case 'Q':
-			exitFlag=1;
-			break;
-
-        case 'h':
-        case 'H':  
-            commandPacket.command = COMMAND_COLOUR_SENSOR;
-            uartSendPacket(&commandPacket);
+			uartSendPacket(&commandPacket);
             break;
 
 		default:

@@ -38,6 +38,8 @@ extern volatile unsigned long rightRevs;
 // Forward and backward distance traveled
 extern volatile unsigned long forwardDist;
 extern volatile unsigned long reverseDist;
+extern double adjLeft;
+extern double adjRight;
 
 
 

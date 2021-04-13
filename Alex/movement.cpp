@@ -122,7 +122,7 @@ void leftISR()
 
     case LEFT:
       leftReverseTicksTurns++; 
-      if (leftReverseTicksTurns >= targetRTicks)
+      if (leftReverseTicksTurns >= targetLTicks)
       {
         OCR0A = 255;
         OCR0B = 255;
@@ -231,12 +231,20 @@ void rightISR()
 // blank.
 void startMotors()
 {
+<<<<<<< HEAD
+  startTimer();
+  PRR    &= ~(PRR_TIMER0_MASK);
+  PRR    &= ~(PRR_TIMER1_MASK);
+  TCCR0B |= 0b00000011;
+  TCCR1B |= 0b00000011;
+=======
   startTime = _timerTicks;
   startTimer();
   PRR     &= ~(PRR_TIMER0_MASK);
   PRR     &= ~(PRR_TIMER1_MASK);
   TCCR0B  |= 0b00000011;
   TCCR1B  |= 0b00000011;
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   TCCR0A  |= 0b00000001;
   TCCR1A  |= 0b00000001;
   switch(dir)
@@ -252,13 +260,13 @@ void startMotors()
       break;
 
     case LEFT:
-      TCCR0A  |= COMPA;
-      TCCR1A  |= COMPB; 
+      TCCR0A  |= COMPB;
+      TCCR1A  |= COMPA; 
       break;
   
     case RIGHT:
-      TCCR0A  |= COMPB;
-      TCCR1A  |= COMPA; 
+      TCCR0A  |= COMPA;
+      TCCR1A  |= COMPB; 
       break;
 
     case STOP:
@@ -311,6 +319,10 @@ void forward(float dist, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
+<<<<<<< HEAD
+  while (!movementDone) {}
+  delayms(50);
+=======
   while (!movementDone && !mvtTimeout) {
         if ((leftForwardTicks >= targetLTicks) && (rightForwardTicks >= targetLTicks) )
         {
@@ -324,6 +336,7 @@ void forward(float dist, float speed)
         }
   }
   delayms(STOPDELAY);
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
@@ -368,7 +381,15 @@ void reverse(float dist, float speed)
     }
   }
   
+<<<<<<< HEAD
+  delayms(STOPDELAY);
+=======
+<<<<<<< HEAD
+  delayms(50);
+=======
   delay(STOPDELAY);
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
+>>>>>>> parent of 3df1057... more merges
   stop();
 }
 
@@ -407,6 +428,10 @@ void left(float ang, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
+<<<<<<< HEAD
+  while (!movementDone) {}
+  delayms(50);
+=======
   while (!movementDone && !mvtTimeout) {        
     if ((leftReverseTicksTurns >= targetLTicks) && (rightForwardTicksTurns >= targetRTicks) )
         {
@@ -420,6 +445,7 @@ void left(float ang, float speed)
         }
     }
   delayms(STOPDELAY);
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
@@ -450,6 +476,12 @@ void right(float ang, float speed)
   OCR0B = val * adjLeft;
   OCR1B = val * adjRight;
   startMotors();
+<<<<<<< HEAD
+  while (!movementDone) {}
+  
+  delayms(50);
+
+=======
   while (!movementDone && !mvtTimeout) {
         if ((leftForwardTicksTurns >= targetLTicks) && (rightReverseTicksTurns >= targetRTicks) )
         {
@@ -463,6 +495,7 @@ void right(float ang, float speed)
         }
   }
   delayms(STOPDELAY);
+>>>>>>> a5ad29853e1be23b6c7451c2d5b18c11730c1251
   stop();
 }
 
@@ -512,11 +545,11 @@ void calibrateMotors()
   {
     if (caliLeft > caliRight)
     {
-      adjLeft = ((float)startTime - caliRight)/ (startTime - caliLeft);
+      adjRight = ((double)caliRight - startTime)/ (caliLeft - startTime);
     }
     else
     {
-      adjRight = ((float)startTime - caliLeft)/ (startTime - caliRight);
+      adjLeft = ((double)caliLeft - startTime)/ (caliRight - startTime);
     }
   }
   delayms(STOPDELAY);

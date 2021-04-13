@@ -38,7 +38,7 @@ void offSensor()
   tcs.disable();
 }
 
-char colourValue()
+char *colourValue()
 {
   PORTD |= (1<<7);
   setupSensor();
@@ -51,18 +51,11 @@ char colourValue()
   PORTD &= ~(1<<7);
   offSensor();
 
- if( (RGB_arr[0] - RGB_arr[1]) < 10 && (RGB_arr[0] - RGB_arr[1]) > -10 )
+ if (RGB_arr[0] > RGB_arr[1])
  {
-  return 'N';
+  return 'R';
  }
- else if (RGB_arr[0] > RGB_arr[1])
- {
-  return "R";
- }
- else
- {
-  return "G";
- }
+ return 'G';
 }
 
 int lightBar()

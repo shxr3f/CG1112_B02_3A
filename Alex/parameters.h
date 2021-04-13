@@ -31,10 +31,10 @@
 
 //Distance parameters
 #define COUNTS_PER_REV          198
-#define WHEEL_CIRC              20.41
+#define WHEEL_CIRC              20.8
 //Turning parameters
 #define ALEX_LENGTH   0
-#define ALEX_BREADTH  6
+#define ALEX_BREADTH  8.5
 
 //amt of time Alex should stop for to prevent unwanted movement
 // in MILLISECONDS
@@ -45,6 +45,7 @@
 
 //Distance to do calibration for
 #define CAL_DIST 10
+#define CAL_MULT 1.2
 
 //Distance to move if 0 was accidentally input as distance
 #define DEFDIST 10
@@ -54,7 +55,7 @@
 //Approximate speed in cm/s for timeout counter
 #define APPROX_SPEED 1
 //Multiplier for the movement timeout  
-#define FAILSAFE_MULT 2
+#define FAILSAFE_MULT 0.5
 
 #define MINTORQUE 140
 
@@ -62,7 +63,7 @@
 #define ADCDELAY 10
 
 //how many ticks of the delay timer for 1s
-#define TIMER_SCALE 200
+#define TIMER_SCALE 1000
 
 
 

@@ -40,7 +40,6 @@ ISR(TIMER2_COMPA_vect)
 { 
   _timerTicks++;
   //movement time out 
-
   if (dir != STOP)
   {
     if (_timerTicks > timeout)
@@ -324,6 +323,11 @@ void clearOneCounter(int which)
     case 9:
       reverseDist = 0;
       break;
+
+    case 10:
+      adjLeft = 0;
+      adjRight = 0;
+      break;
   } 
 }
 
@@ -342,25 +346,25 @@ void handleCommand(TPacket *command)
     case COMMAND_FORWARD:
       sendOK();
       forward((float) command->params[0], (float) command->params[1]);
-      sendMessage("MvtDone");
+      sendMessage("DNE");
       break;
 
     case COMMAND_TURN_LEFT:
       sendOK();
       left((float) command->params[0], (float) command->params[1]);
-      sendMessage("MvtDone");
+      sendMessage("DNE");
       break;
 
     case COMMAND_TURN_RIGHT:
       sendOK();
       right((float) command->params[0], (float) command->params[1]);
-      sendMessage("MvtDone");
+      sendMessage("DNE");
       break;
 
     case COMMAND_REVERSE:
       sendOK();
       reverse((float) command->params[0], (float) command->params[1]);
-      sendMessage("MvtDone");
+      sendMessage("DNE");
       break;
 
     case COMMAND_STOP:
@@ -381,7 +385,19 @@ void handleCommand(TPacket *command)
     case COMMAND_COLOUR_SENSOR:
       sendOK();
       colour = colourValue();
-      sendMessage(&colour);
+      if (colour == 'G')
+      {
+        sendMessage("C=G");
+      }
+      else if (colour == 'N')
+      {
+        
+        sendMessage("NOC");
+      }
+      else
+      {
+      sendMessage("C=R");
+      }
       break;
 
     case COMMAND_LIGHT_BAR:
@@ -389,18 +405,18 @@ void handleCommand(TPacket *command)
       returnMsg = lightBar();
       if (returnMsg == 1)
       {
-        sendMessage("light bar ON");
+        sendMessage("ONN");
       }
       else
       {
-        sendMessage("light bar OFF");
+        sendMessage("OFF");
       }
       break;
 
     case COMMAND_CALIBRATE:
       sendOK();
       calibrateMotors();
-      sendMessage("Calibration done");
+      sendMessage("CAL");
 
         
     default:
@@ -461,7 +477,7 @@ void setup() {
   enablePullups();
   initializeState();
   WDT_off();
-  setupPowerSaving();
+//  setupPowerSaving();
   sei();
 }
 
@@ -488,7 +504,6 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-
  // put your main code here, to run repeatedly:
 
   TPacket recvPacket; // This holds commands from the Pi
@@ -510,6 +525,4 @@ void loop() {
       {
         sendBadChecksum();
       } 
- 
-  
 }
